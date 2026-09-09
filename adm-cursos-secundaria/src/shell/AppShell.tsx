@@ -11,6 +11,7 @@ import {
   Users,
 } from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
+import AnioLectivoControl from "./AnioLectivoControl";
 
 const NAV = [
   { to: "/", label: "Inicio", icon: Home, end: true },
@@ -38,6 +39,7 @@ function AppShell() {
         <h1 className="font-serif text-lg tracking-wide">
           Administración de cursos escolares
         </h1>
+        <AnioLectivoControl />
       </header>
 
       <div className="flex min-h-0 flex-1">

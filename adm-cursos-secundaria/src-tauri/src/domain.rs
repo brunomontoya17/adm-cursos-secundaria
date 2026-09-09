@@ -5,6 +5,7 @@
 use serde::{Deserialize, Serialize};
 
 pub const JURISDICCION_CODIGOS: [&str; 3] = ["pba", "caba", "otra"];
+pub const NIVEL_CODIGOS: [&str; 2] = ["primaria", "secundaria"];
 pub const TIPO_EVENTO_CODIGOS: [&str; 6] =
     ["tema", "entrega", "reunion", "junta", "acto", "otro"];
 pub const TIPO_EVALUACION_CODIGOS: [&str; 5] =
@@ -38,8 +39,16 @@ pub struct Division {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct Nivel {
+    pub id: i64,
+    pub codigo: String,
+    pub nombre: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Ciclo {
     pub id: i64,
+    pub id_nivel: i64,
     pub nombre: String,
     pub orden: i64,
 }
@@ -98,14 +107,41 @@ pub struct Escuela {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct EscuelaWrite {
+    pub id_jurisdiccion: i64,
+    pub nombre: String,
+    pub nombre_corto: Option<String>,
+    pub direccion: Option<String>,
+    pub telefono: Option<String>,
+    pub email: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Materia {
     pub id: i64,
     pub nombre: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct MateriaWrite {
+    pub nombre: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Curso {
     pub id: i64,
+    pub nombre: String,
+    pub id_escuela: i64,
+    pub id_turno: i64,
+    pub id_division: i64,
+    pub id_ciclo: i64,
+    pub id_materia: i64,
+    pub id_anio_lectivo: i64,
+    pub orientacion: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct CursoWrite {
     pub nombre: String,
     pub id_escuela: i64,
     pub id_turno: i64,

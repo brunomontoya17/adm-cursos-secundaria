@@ -25,7 +25,7 @@
   },
   {
     "id": "adm-cursos-bootstrap-2026-09-09-domain",
-    "content": "Producto: cuaderno de dictados para UN profesor de cualquier materia de secundaria (PBA y/o CABA). NO es app de director/preceptor/secretaria: no modela la escuela, solo los cursos donde dicta. database.sql (SQLite) es la fuente de verdad. Curso = dictado: materia + ciclo + division + turno + escuela + anio. Escuela tiene jurisdiccion (pba/caba/otra). Alumno es persona de SUS cursos; inscripcion en alumnos_cursos. Operativa: eventos (tema/entrega/reunion/junta/acto-sin-clase/otro), evaluaciones, notas TEXT decimal, observaciones del dictado, asistencia de ESA hora (no libro escolar), horarios del profesor. Un solo anio lectivo activo. Sin tabla profesores.",
+    "content": "Producto: cuaderno de dictados para UN docente de PBA y/o CABA: profesor de materia (ingles, artisticas, etc.) en primaria y/o secundaria, y maestro de grado. Caso testigo: profesor de ingles con horas en ambos niveles. NO es app de director/preceptor/secretaria. database.sql v1.2 es la fuente de verdad. niveles (primaria, secundaria); ciclos = grado o anio segun nivel (3 grado != 3 anio). Curso = dictado: materia + ciclo + division + turno + escuela + anio lectivo. Maestro de grado: materia Grado o areas. Alumno es persona de SUS cursos. Operativa: eventos, evaluaciones, notas TEXT decimal, observaciones, asistencia de ESA hora, horarios. Un solo anio lectivo activo. Sin tabla profesores. Fuera: inicial/jardin.",
     "user_id": "adm-cursos",
     "session_id": null,
     "agent_id": null,

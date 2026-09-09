@@ -1,6 +1,6 @@
 # Adm Cursos Secundaria
 
-Cuaderno de escritorio para **un profesor** de secundaria (PBA y/o CABA) que quiere ordenar **los cursos donde dicta**. No es software de director ni de secretaría.
+Cuaderno de escritorio para **un docente** de PBA y/o CABA que quiere ordenar **los cursos donde dicta**: primaria y secundaria, profesor de materia (inglés, artísticas, …) o maestro de grado. No es software de director ni de secretaría.
 
 App **local**: React + Tauri en el frontend, **Rust + SQLite** en el backend. Sin login ni API remota.
 
@@ -22,5 +22,11 @@ npm run tauri dev
 ```
 
 Frontend solo (Vite): `npm run dev`.
+
+Tras un cambio en Rust hay que **reiniciar** `npm run tauri dev`; el HMR del front no recarga comandos.
+
+## Estado
+
+Pasos **0–2** del [roadmap](docs/roadmap.md): shell, escuelas/materias/año lectivo, y cursos (primaria y secundaria). Schema `database.sql` **v1.2**. Siguiente: alumnos e inscripción.
 
 Repositorio: [brunomontoya17/adm-cursos-secundaria](https://github.com/brunomontoya17/adm-cursos-secundaria).

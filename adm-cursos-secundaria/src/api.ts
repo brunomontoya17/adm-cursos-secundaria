@@ -87,6 +87,7 @@ export const decimalTextSchema = z.string().refine((value) => {
 export const diaSemanaSchema = z.number().int().min(1).max(7);
 
 export const JURISDICCION_CODIGOS = ["pba", "caba", "otra"] as const;
+export const NIVEL_CODIGOS = ["primaria", "secundaria"] as const;
 export const TIPO_EVENTO_CODIGOS = [
   "tema",
   "entrega",
@@ -116,6 +117,7 @@ export const ESTADO_ASISTENCIA_CODIGOS = [
 ] as const;
 
 export const jurisdiccionCodigoSchema = z.enum(JURISDICCION_CODIGOS);
+export const nivelCodigoSchema = z.enum(NIVEL_CODIGOS);
 export const tipoEventoCodigoSchema = z.enum(TIPO_EVENTO_CODIGOS);
 export const tipoEvaluacionCodigoSchema = z.enum(TIPO_EVALUACION_CODIGOS);
 export const tipoObservacionCodigoSchema = z.enum(TIPO_OBSERVACION_CODIGOS);
@@ -138,8 +140,15 @@ export const divisionSchema = z.object({
   nombre: nombreSchema,
 });
 
+export const nivelSchema = z.object({
+  id: idSchema,
+  codigo: nivelCodigoSchema,
+  nombre: nombreSchema,
+});
+
 export const cicloSchema = z.object({
   id: idSchema,
+  id_nivel: idSchema,
   nombre: nombreSchema,
   orden: z.number().int().positive(),
 });
@@ -309,9 +318,16 @@ export const dbStatusSchema = z.object({
   tables: z.number().int().nonnegative(),
 });
 
-export const escuelaWriteSchema = escuelaSchema.omit({ id: true });
-export const materiaWriteSchema = materiaSchema.omit({ id: true });
-export const cursoWriteSchema = cursoSchema.omit({ id: true });
+export const escuelaWriteSchema = escuelaSchema.omit({ id: true }).extend({
+  nombre: z.string().min(1, "El nombre es obligatorio."),
+  email: z.string().email("El email no es válido.").nullable(),
+});
+export const materiaWriteSchema = materiaSchema.omit({ id: true }).extend({
+  nombre: z.string().min(1, "El nombre es obligatorio."),
+});
+export const cursoWriteSchema = cursoSchema.omit({ id: true }).extend({
+  nombre: z.string().min(1, "El nombre es obligatorio."),
+});
 export const alumnoWriteSchema = alumnoSchema.omit({ id: true });
 export const alumnoCursoWriteSchema = alumnoCursoSchema.omit({ id: true });
 export const horarioWriteSchema = horarioSchema.omit({ id: true });
@@ -324,6 +340,7 @@ export const asistenciaWriteSchema = asistenciaSchema.omit({ id: true });
 export type Flag01 = z.infer<typeof flag01Schema>;
 export type Turno = z.infer<typeof turnoSchema>;
 export type Division = z.infer<typeof divisionSchema>;
+export type Nivel = z.infer<typeof nivelSchema>;
 export type Ciclo = z.infer<typeof cicloSchema>;
 export type AnioLectivo = z.infer<typeof anioLectivoSchema>;
 export type Jurisdiccion = z.infer<typeof jurisdiccionSchema>;
@@ -355,8 +372,41 @@ export type NotaWrite = z.infer<typeof notaWriteSchema>;
 export type ObservacionWrite = z.infer<typeof observacionWriteSchema>;
 export type AsistenciaWrite = z.infer<typeof asistenciaWriteSchema>;
 
-/** Comandos Tauri existentes. Ampliar acá al agregar handlers en Rust. */
+const voidResultSchema = z.null();
+
+/** Comandos Tauri: argumentos de invoke en snake_case (`rename_all` en Rust). */
 export const api = {
   greet: (name: string) => invokeChecked("greet", z.string(), { name }),
   dbStatus: () => invokeChecked("db_status", dbStatusSchema),
+  listJurisdicciones: () =>
+    invokeChecked("list_jurisdicciones", z.array(jurisdiccionSchema)),
+  listTurnos: () => invokeChecked("list_turnos", z.array(turnoSchema)),
+  listDivisiones: () => invokeChecked("list_divisiones", z.array(divisionSchema)),
+  listNiveles: () => invokeChecked("list_niveles", z.array(nivelSchema)),
+  listCiclos: () => invokeChecked("list_ciclos", z.array(cicloSchema)),
+  listEscuelas: () => invokeChecked("list_escuelas", z.array(escuelaSchema)),
+  createEscuela: (escuela: EscuelaWrite) =>
+    invokeChecked("create_escuela", escuelaSchema, { escuela }),
+  updateEscuela: (id: number, escuela: EscuelaWrite) =>
+    invokeChecked("update_escuela", escuelaSchema, { id, escuela }),
+  deleteEscuela: (id: number) => invokeChecked("delete_escuela", voidResultSchema, { id }),
+  listMaterias: () => invokeChecked("list_materias", z.array(materiaSchema)),
+  createMateria: (materia: MateriaWrite) =>
+    invokeChecked("create_materia", materiaSchema, { materia }),
+  updateMateria: (id: number, materia: MateriaWrite) =>
+    invokeChecked("update_materia", materiaSchema, { id, materia }),
+  deleteMateria: (id: number) => invokeChecked("delete_materia", voidResultSchema, { id }),
+  listAniosLectivos: () =>
+    invokeChecked("list_anios_lectivos", z.array(anioLectivoSchema)),
+  createAnioLectivo: (anio: number) =>
+    invokeChecked("create_anio_lectivo", anioLectivoSchema, { anio }),
+  activarAnioLectivo: (id: number) =>
+    invokeChecked("activar_anio_lectivo", anioLectivoSchema, { id }),
+  listCursos: (id_anio_lectivo: number) =>
+    invokeChecked("list_cursos", z.array(cursoSchema), { id_anio_lectivo }),
+  getCurso: (id: number) => invokeChecked("get_curso", cursoSchema, { id }),
+  createCurso: (curso: CursoWrite) => invokeChecked("create_curso", cursoSchema, { curso }),
+  updateCurso: (id: number, curso: CursoWrite) =>
+    invokeChecked("update_curso", cursoSchema, { id, curso }),
+  deleteCurso: (id: number) => invokeChecked("delete_curso", voidResultSchema, { id }),
 };

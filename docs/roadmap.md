@@ -2,7 +2,7 @@
 
 | | |
 |--|--|
-| **Producto** | Cuaderno de dictados de un profesor de secundaria (PBA y/o CABA) |
+| **Producto** | Cuaderno de dictados de un docente (primaria y secundaria, PBA y/o CABA) |
 | **Fuente de verdad** | [`database.sql`](../database.sql) |
 | **Mapa de dominio** | [`domain-map.md`](./domain-map.md) |
 | **Fecha** | 2026-09-09 |
@@ -16,41 +16,47 @@ Fuera de este roadmap (a propósito): login, multi-profesor, matrícula instituc
 ## Convención de cada paso
 
 - Ampliar `database.sql` **solo** si falta una columna o invariante; si no, no tocar el esquema.
-- IPC: tipos Zod en `src/api.ts` ↔ serde en `src-tauri/src/domain.rs` (mismos nombres que el SQL).
+- IPC: tipos Zod en `src/api.ts` ↔ serde en `src-tauri/src/domain.rs` (mismos nombres que el SQL). Argumentos de comando Tauri en **snake_case** (`#[tauri::command(rename_all = "snake_case")]`); Tauri 2 camelCasea por defecto.
 - Listados con `@tanstack/react-table`. Fechas con Temporal. Notas/ponderaciones con `decimal.js`.
 - Éxito: toast (esquina inferior derecha). Error de BD: Swal, sin rebote.
 - Filtro implícito: año lectivo **activo**, salvo que la pantalla permita cambiarlo.
 
 ---
 
-## Ya está (paso 0)
+## Ya está (pasos 0–2)
 
-Shell Tauri 1280×720, paleta y logo, menú izquierdo, HashRouter, SQLite con `PRAGMA foreign_keys=ON`, `db_status`, contrato Zod/serde de dominio. Las secciones del menú son títulos vacíos.
+- **0 Shell.** Tauri 1280×720, paleta y logo, menú izquierdo, HashRouter, SQLite con `PRAGMA foreign_keys=ON`, `db_status`, contrato Zod/serde. Schema **v1.2**: catálogo `niveles`, ciclos por nivel (grado ≠ año), migración desde DBs v1.1.
+- **1 Escuelas, materias y año lectivo.** `/escuelas` (CRUD escuelas + panel materias). Año activo en cabecera: ver, crear el siguiente, activar uno solo.
+- **2 Cursos.** `/cursos` listado del año activo (filtro por nivel), alta con nivel → ciclo, etiqueta sugerida, edición y baja. Ficha `/cursos/:id` con resumen; alumnos/horario/fechas aún placeholders.
+
+Siguiente: paso 3 (alumnos e inscripción). El resto del menú sigue vacío.
 
 ---
 
-## Paso 1 — Año lectivo, escuelas y materias
+## Paso 1 — Año lectivo, escuelas y materias **(hecho)**
 
 **Para qué.** El profesor arma el contexto mínimo: dónde dicta y qué asignaturas da. Sin esto no hay cursos.
 
 **Pantallas**
 
-- **Escuelas** (`/escuelas`): alta/edición/baja. Jurisdicción (PBA / CABA / Otra), nombre, nombre corto opcional, contacto opcional.
-- Materias: alta/edición/baja de nombres (Matemática, Historia, English, …). Puede vivir en Escuelas como panel, o en Cursos como catálogo embebido; no hace falta un ítem extra en el menú.
+- **Escuelas** (`/escuelas`): alta/edición/baja. Jurisdicción (PBA / CABA / Otra), nombre, nombre corto opcional, contacto opcional. Una escuela puede tener dictados de primaria y de secundaria.
+- Materias: alta/edición/baja (English, Plástica, «Grado», …). Panel en Escuelas; no hace falta un ítem extra en el menú.
 - Año lectivo: ver el activo (seed 2026), crear el siguiente, **activar uno solo**. Cabecera o Inicio; no es un menú propio.
 
 **Listo cuando** se puede cargar “ENET Nº 1 — PBA” y “English”, y el año activo es visible.
 
 ---
 
-## Paso 2 — Cursos (el dictado)
+## Paso 2 — Cursos (el dictado) **(hecho)**
 
-**Para qué.** Un curso = escuela + turno + división + ciclo + materia + año lectivo. Es el hub de toda la app.
+**Para qué.** Un curso = escuela + turno + división + ciclo (grado o año, según nivel) + materia + año lectivo. Es el hub de toda la app.
 
 **Pantalla** `/cursos`
 
-- Listado del año activo (nombre, escuela, materia, ciclo, división, turno, orientación).
-- Alta: elige combos ya cargados; `nombre` es etiqueta de UI (ej. “1° A English — ENET”).
+- Listado del año activo, con nivel visible (Primaria / Secundaria).
+- Alta: nivel → ciclo (grado o año) + resto de combos. `nombre` es etiqueta de UI (ej. “3° B English — primaria” o “1° A English — ENET”).
+- Mismo colegio: 3° grado English y 3° año English son dos cursos (ciclos distintos).
+- Maestro de grado: un curso por grupo, materia «Grado» (o un área).
 - Edición y baja (RESTRICT si hay datos operativos; CASCADE donde el SQL ya lo define).
 - Ficha del curso: resumen vacío hasta los pasos siguientes (alumnos, horario, próximas fechas).
 
@@ -178,8 +184,8 @@ Opcional en el mismo paso o justo después: un gráfico simple (Recharts) de pro
 
 ```text
 0 Shell/DB          (hecho)
-1 Escuelas + materias + año
-2 Cursos
+1 Escuelas + materias + año  (hecho)
+2 Cursos                     (hecho)
 3 Alumnos ↔ cursos
 4 Horarios
 5 Evaluaciones

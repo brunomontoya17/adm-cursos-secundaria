@@ -1,6 +1,6 @@
 # Adm Cursos Secundaria — convenciones para agentes
 
-Administrador de cursos de escritorio para **un profesor** de cualquier materia de secundaria (PBA y/o CABA) que quiere ordenar **los cursos donde dicta**. No es una app de director, preceptor ni secretaría: no gestiona la escuela, sino el dictado. App **local** (sin servidor remoto): React + Tauri en el frontend, **Rust + SQLite** en el backend.
+Administrador de cursos de escritorio para **un docente** de PBA y/o CABA que quiere ordenar **los cursos donde dicta**: profesor de materia (inglés, artísticas, etc.) en **primaria y/o secundaria**, y **maestro de grado**. No es una app de director, preceptor ni secretaría: no gestiona la escuela, sino el dictado. App **local** (sin servidor remoto): React + Tauri en el frontend, **Rust + SQLite** en el backend.
 
 ## Estructura
 
@@ -24,11 +24,11 @@ Administrador de cursos de escritorio para **un profesor** de cualquier materia 
 
 ## Dominio (estado actual)
 
-**Actor:** un solo profesor. Solo existe lo que carga porque dicta ahí (puede ser varias escuelas, PBA y CABA a la vez). **Sin login ni usuarios:** la app es personal, local, sin soporte online. Un **curso** es un dictado: materia + grupo (ciclo/división/turno) + escuela + año. El alumno es persona de *sus* cursos; inscripción en `alumnos_cursos`. Un año lectivo activo.
+**Actor:** un solo docente. Solo existe lo que carga porque dicta ahí (varias escuelas, PBA y CABA, **primaria y secundaria** a la vez). Caso testigo: profesor de inglés con horas en primaria y en secundaria. Maestro de grado: un curso por grupo, materia «Grado» o las áreas que separe. **Sin login ni usuarios.** Un **curso** es un dictado: materia + grupo (nivel + ciclo/división/turno) + escuela + año lectivo. El **ciclo** es grado (primaria) o año (secundaria); 3° grado ≠ 3° año. El alumno es persona de *sus* cursos; inscripción en `alumnos_cursos`. Un año lectivo activo. Fuera: inicial/jardín.
 
 **Marca:** `docs/Logo y paleta de colores.jpeg` — paleta en `src/index.css` (`paper`, `navy`, `crimson`, `cream`, `sky`); logo centrado en la ventana (`public/logo.jpeg`).
 
-**Tablas en `database.sql`:** catálogos (`turnos`, `divisiones`, `ciclos`, `anios_lectivos`, `jurisdicciones`, `tipos_*`, `estados_asistencia`); maestras (`escuelas`, `materias`, `cursos`, `alumnos`, `alumnos_cursos`, `horarios`); operativa (`eventos`, `evaluaciones`, `notas`, `observaciones`, `asistencias`).
+**Tablas en `database.sql`:** catálogos (`niveles`, `turnos`, `divisiones`, `ciclos`, `anios_lectivos`, `jurisdicciones`, `tipos_*`, `estados_asistencia`); maestras (`escuelas`, `materias`, `cursos`, `alumnos`, `alumnos_cursos`, `horarios`); operativa (`eventos`, `evaluaciones`, `notas`, `observaciones`, `asistencias`). Schema v1.2. DBs v1.1: Rust migra `niveles` + ciclos por nivel sin borrar datos.
 
 Los exámenes viven en `evaluaciones` (el calendario de exámenes se deriva de ahí). `eventos` es el quehacer del profesor (tema, entrega, reunión, junta, acto/sin clase, otro), no el calendario institucional. Notas y ponderaciones son **TEXT** decimal. Asistencia = esa hora de clase, no el registro oficial del colegio.
 
@@ -49,7 +49,7 @@ Detalle, invariantes y lo que **queda fuera** (director/escuela): [`docs/domain-
 
 `tailwindcss`, `toastify` (react-toastify), `sweetalert2`, `zod`, `decimal.js`, `@tanstack/react-table`, `lucide-react`, `react-router-dom`, `recharts`, Temporal.
 
-Instaladas en `adm-cursos-secundaria/package.json`. Tailwind v4 (`@tailwindcss/vite`). Fechas: `@js-temporal/polyfill`. Contrato IPC: `src/api.ts` (Zod) ↔ `src-tauri/src/domain.rs` (serde, mismos nombres que `database.sql`).
+Instaladas en `adm-cursos-secundaria/package.json`. Tailwind v4 (`@tailwindcss/vite`). Fechas: `@js-temporal/polyfill`. Contrato IPC: `src/api.ts` (Zod) ↔ `src-tauri/src/domain.rs` (serde, mismos nombres que `database.sql`). Argumentos de `invoke` en **snake_case**: cada comando Rust lleva `#[tauri::command(rename_all = "snake_case")]` (Tauri 2 camelCasea por defecto; sin eso `id_anio_lectivo` llega como `idAnioLectivo` y falla).
 
 ### Backend Rust
 
@@ -58,6 +58,7 @@ Instaladas en `adm-cursos-secundaria/package.json`. Tailwind v4 (`@tailwindcss/v
 - Al abrir: si la DB no tiene tablas de usuario, se aplica `database.sql` (sin reejecutar los `PRAGMA` del archivo). Si ya hay tablas, no se corren los `DROP`.
 - Archivo runtime: `{app_data_dir}/adm-cursos.sqlite`. Comando `db_status` para verificar pragmas.
 - Tipos `serde` en el borde Tauri; no filtrar filas crudas sin DTO.
+- Comandos de dominio: `maestras.rs` (escuelas, materias, años, catálogos) y `cursos.rs`. Errores SQL se mapean a mensajes en español (`db::map_sql_error`).
 
 ## Tooling de contexto
 

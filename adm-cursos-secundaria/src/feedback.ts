@@ -21,3 +21,22 @@ export function showDbError(message: string): void {
     text: message,
   });
 }
+
+export async function confirmAction(opts: {
+  title: string;
+  text?: string;
+  confirmText: string;
+  danger?: boolean;
+}): Promise<boolean> {
+  const result = await Swal.fire({
+    ...SWAL_DB,
+    icon: opts.danger ? "warning" : "question",
+    title: opts.title,
+    text: opts.text,
+    showCancelButton: true,
+    confirmButtonText: opts.confirmText,
+    cancelButtonText: "Cancelar",
+    confirmButtonColor: opts.danger ? "#b43b42" : "#0b2540",
+  });
+  return result.isConfirmed;
+}

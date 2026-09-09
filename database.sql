@@ -1,13 +1,14 @@
--- Adm Cursos Secundaria — esquema de dominio (fuente de verdad)
+-- Adm Cursos — esquema de dominio (fuente de verdad) v1.2
 -- Dialecto: SQLite. Runtime: un archivo local vía Rust (PRAGMA foreign_keys = ON).
 -- Fechas: TEXT ISO (YYYY-MM-DD). Horas: TEXT HH:MM (24h).
 -- Notas y ponderaciones: TEXT decimal canónico (ej. '7.50'); aritmética en app con decimal.js, no REAL.
 --
--- Actor: UN profesor de cualquier materia de secundaria (PBA y/o CABA).
--- La app ordena LOS CURSOS DONDE DICTA, no una escuela. No es software de director,
--- preceptor ni secretaría: no hay matrícula institucional, plantel, ni todas las
--- divisiones del establecimiento. Solo existe lo que el profesor carga porque dicta ahí.
--- Un profesor = un usuario de la app; no hay tabla profesores.
+-- Actor: UN docente (profesor de materia o maestro de grado) en PBA y/o CABA.
+-- Cubre primaria y secundaria: el caso testigo es un profesor de inglés con horas
+-- en ambos niveles; también entra el maestro de grado (un grupo, materia «Grado»
+-- o las áreas que separe). La app ordena LOS CURSOS DONDE DICTA, no una escuela.
+-- No es software de director, preceptor ni secretaría. Un usuario = la app; no
+-- hay tabla profesores. Fuera de alcance: inicial/jardín, a propósito.
 
 PRAGMA foreign_keys = ON;
 PRAGMA journal_mode = WAL;
@@ -33,6 +34,7 @@ DROP TABLE IF EXISTS tipos_evaluacion;
 DROP TABLE IF EXISTS tipos_evento;
 DROP TABLE IF EXISTS anios_lectivos;
 DROP TABLE IF EXISTS ciclos;
+DROP TABLE IF EXISTS niveles;
 DROP TABLE IF EXISTS divisiones;
 DROP TABLE IF EXISTS turnos;
 
@@ -50,12 +52,25 @@ CREATE TABLE divisiones (
     nombre TEXT NOT NULL UNIQUE
 );
 
--- Año del grupo al que el profesor dicta (no la oferta completa de un colegio).
--- PBA secundaria típica: 1–6. CABA secundaria típica: 1–5. Técnico puede usar 6–7.
+-- Nivel del dictado (no de «toda la escuela»: un colegio puede tener ambos).
+CREATE TABLE niveles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    codigo TEXT NOT NULL UNIQUE,
+    nombre TEXT NOT NULL UNIQUE
+);
+
+-- Grupo al que dicta, según el nivel. No es la oferta completa del colegio.
+-- Primaria: grado. PBA típica 1–6; CABA típica 1–7.
+-- Secundaria: año. CABA típica 1–5; PBA 1–6; técnico a veces 7.
+-- orden se repite por nivel (3° grado ≠ 3° año): unique es (id_nivel, orden).
 CREATE TABLE ciclos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nombre TEXT NOT NULL UNIQUE,
-    orden INTEGER NOT NULL UNIQUE
+    id_nivel INTEGER NOT NULL,
+    nombre TEXT NOT NULL,
+    orden INTEGER NOT NULL,
+    FOREIGN KEY (id_nivel) REFERENCES niveles (id) ON DELETE RESTRICT,
+    UNIQUE (id_nivel, nombre),
+    UNIQUE (id_nivel, orden)
 );
 
 -- Un solo año activo a la vez (índice parcial más abajo).
@@ -115,15 +130,17 @@ CREATE TABLE escuelas (
     UNIQUE (id_jurisdiccion, nombre)
 );
 
--- Asignaturas que ESTE profesor dicta (no el diseño curricular de la escuela).
+-- Asignaturas que ESTE docente dicta (no el diseño curricular de la escuela).
+-- Profesor de materia (inglés, artísticas, ed. física, …): el nombre de la asignatura.
+-- Maestro de grado: suele ser «Grado» (un dictado por grupo) o las áreas que separe.
 CREATE TABLE materias (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nombre TEXT NOT NULL UNIQUE
 );
 
--- Un dictado del profesor: materia + grupo + escuela + año.
--- orientacion es etiqueta libre (Bachiller, Ciencias, Economía, técnico, …);
--- en ciclo básico suele ir NULL.
+-- Un dictado: materia + grupo (ciclo = grado o año, según nivel) + escuela + año lectivo.
+-- El nivel entra por id_ciclo. Así 3° grado English y 3° año English conviven en la misma escuela.
+-- orientacion es etiqueta libre (Bachiller, Ciencias, Economía, técnico, …); en primaria suele ir NULL.
 CREATE TABLE cursos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nombre TEXT NOT NULL,
@@ -256,6 +273,7 @@ CREATE UNIQUE INDEX ux_anios_lectivos_activo ON anios_lectivos (activo) WHERE ac
 
 CREATE INDEX ix_cursos_anio ON cursos (id_anio_lectivo);
 CREATE INDEX ix_cursos_escuela ON cursos (id_escuela);
+CREATE INDEX ix_ciclos_nivel ON ciclos (id_nivel);
 CREATE INDEX ix_escuelas_jurisdiccion ON escuelas (id_jurisdiccion);
 CREATE INDEX ix_alumnos_apellido_nombre ON alumnos (apellido, nombre);
 CREATE INDEX ix_alumnos_cursos_curso ON alumnos_cursos (id_curso);
@@ -275,14 +293,29 @@ INSERT INTO turnos (nombre) VALUES ('Mañana'), ('Tarde'), ('Vespertino'), ('Noc
 
 INSERT INTO divisiones (nombre) VALUES ('A'), ('B'), ('C'), ('D');
 
-INSERT INTO ciclos (nombre, orden) VALUES
-    ('Primer Año', 1),
-    ('Segundo Año', 2),
-    ('Tercer Año', 3),
-    ('Cuarto Año', 4),
-    ('Quinto Año', 5),
-    ('Sexto Año', 6),
-    ('Séptimo Año', 7);
+INSERT INTO niveles (codigo, nombre) VALUES
+    ('primaria', 'Primaria'),
+    ('secundaria', 'Secundaria');
+
+INSERT INTO ciclos (id_nivel, nombre, orden)
+SELECT n.id, v.nombre, v.orden
+FROM niveles AS n
+JOIN (
+    SELECT 'primaria' AS codigo, 'Primer Grado' AS nombre, 1 AS orden UNION ALL
+    SELECT 'primaria', 'Segundo Grado', 2 UNION ALL
+    SELECT 'primaria', 'Tercer Grado', 3 UNION ALL
+    SELECT 'primaria', 'Cuarto Grado', 4 UNION ALL
+    SELECT 'primaria', 'Quinto Grado', 5 UNION ALL
+    SELECT 'primaria', 'Sexto Grado', 6 UNION ALL
+    SELECT 'primaria', 'Séptimo Grado', 7 UNION ALL
+    SELECT 'secundaria', 'Primer Año', 1 UNION ALL
+    SELECT 'secundaria', 'Segundo Año', 2 UNION ALL
+    SELECT 'secundaria', 'Tercer Año', 3 UNION ALL
+    SELECT 'secundaria', 'Cuarto Año', 4 UNION ALL
+    SELECT 'secundaria', 'Quinto Año', 5 UNION ALL
+    SELECT 'secundaria', 'Sexto Año', 6 UNION ALL
+    SELECT 'secundaria', 'Séptimo Año', 7
+) AS v ON v.codigo = n.codigo;
 
 INSERT INTO anios_lectivos (anio, activo) VALUES (2026, 1);
 
