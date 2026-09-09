@@ -1,0 +1,157 @@
+[
+  {
+    "id": "adm-cursos-bootstrap-2026-09-09-stack",
+    "content": "Adm Cursos Secundaria es una app de escritorio local (sin API remota): carpeta adm-cursos-secundaria (Tauri 2 + React 19 + TypeScript + Vite) con backend Rust en src-tauri y SQLite local. Raiz del proyecto: C:/Users/Usuario/Desktop/Bruno/Proy. TMST. El frontend no habla SQL; Rust intermedia. FE libs objetivo (libraries-npm.md): tailwindcss, react-toastify, sweetalert2, zod, decimal.js, @tanstack/react-table, lucide-react, react-router-dom, recharts; fechas con Temporal. package.json del scaffold aun no las instala (solo React + Tauri). No mezclar stack con FactuStock (Laravel).",
+    "user_id": "adm-cursos",
+    "session_id": null,
+    "agent_id": null,
+    "turn_id": null,
+    "created_at": "2026-09-09T12:00:00",
+    "valid_from": "2026-09-09T12:00:00",
+    "valid_until": null,
+    "importance": 0.95,
+    "entity_refs": [
+      "adm-cursos-secundaria",
+      "Tauri",
+      "Rust",
+      "SQLite",
+      "React",
+      "libraries-npm.md"
+    ],
+    "metadata": {
+      "source": "bootstrap-2026-09-09",
+      "type": "architecture"
+    }
+  },
+  {
+    "id": "adm-cursos-bootstrap-2026-09-09-domain",
+    "content": "Producto: cuaderno de dictados para UN profesor de cualquier materia de secundaria (PBA y/o CABA). NO es app de director/preceptor/secretaria: no modela la escuela, solo los cursos donde dicta. database.sql (SQLite) es la fuente de verdad. Curso = dictado: materia + ciclo + division + turno + escuela + anio. Escuela tiene jurisdiccion (pba/caba/otra). Alumno es persona de SUS cursos; inscripcion en alumnos_cursos. Operativa: eventos (tema/entrega/reunion/junta/acto-sin-clase/otro), evaluaciones, notas TEXT decimal, observaciones del dictado, asistencia de ESA hora (no libro escolar), horarios del profesor. Un solo anio lectivo activo. Sin tabla profesores.",
+    "user_id": "adm-cursos",
+    "session_id": null,
+    "agent_id": null,
+    "turn_id": null,
+    "created_at": "2026-09-09T12:00:01",
+    "valid_from": "2026-09-09T12:00:01",
+    "valid_until": null,
+    "importance": 0.97,
+    "entity_refs": [
+      "Escuela",
+      "Curso",
+      "Alumno",
+      "Materia",
+      "Evaluacion",
+      "Nota",
+      "Evento",
+      "database.sql"
+    ],
+    "metadata": {
+      "source": "bootstrap-2026-09-09",
+      "type": "domain"
+    }
+  },
+  {
+    "id": "adm-cursos-bootstrap-2026-09-09-sql-sqlite",
+    "content": "database.sql es SQLite aplicable tal cual (PRAGMA foreign_keys=ON, INTEGER PRIMARY KEY AUTOINCREMENT, TEXT). Fechas YYYY-MM-DD, horas HH:MM. Notas y ponderaciones TEXT decimal (no REAL); FE decimal.js. No reintroducir MySQL CREATE DATABASE/AUTO_INCREMENT/VARCHAR. Un archivo sqlite local; Rust habilita foreign_keys en cada conexion.",
+    "user_id": "adm-cursos",
+    "session_id": null,
+    "agent_id": null,
+    "turn_id": null,
+    "created_at": "2026-09-09T12:00:02",
+    "valid_from": "2026-09-09T12:00:02",
+    "valid_until": null,
+    "importance": 0.94,
+    "entity_refs": [
+      "database.sql",
+      "SQLite",
+      "MySQL"
+    ],
+    "metadata": {
+      "source": "bootstrap-2026-09-09",
+      "type": "persistence"
+    }
+  },
+  {
+    "id": "adm-cursos-bootstrap-2026-09-09-cbm",
+    "content": "codebase-memory-mcp: project id = path absoluto del clone. Trabajo: C:/Users/Usuario/Desktop/Bruno/Proy. TMST -> C-Users-Usuario-Desktop-Bruno-Proy.-TMST (el punto de Proy. queda en el id; 129 nodos / 143 edges, full+persistence 2026-09-09). Indexar desde la raiz con .cbmignore. Verificar search_code pattern=alumnos y CREATE TABLE; search_graph query=greet. search_graph no trata tablas SQL como nodos de dominio. Artefacto .codebase-memory/graph.db.zst gitignore. No mezclar con FactuStock ni StockSQL. Ver AGENTS.md Multi-maquina.",
+    "user_id": "adm-cursos",
+    "session_id": null,
+    "agent_id": null,
+    "turn_id": null,
+    "created_at": "2026-09-09T12:00:03",
+    "valid_from": "2026-09-09T12:00:03",
+    "valid_until": null,
+    "importance": 0.95,
+    "entity_refs": [
+      "codebase-memory-mcp",
+      "AGENTS.md"
+    ],
+    "metadata": {
+      "source": "bootstrap-2026-09-09",
+      "type": "tooling"
+    }
+  },
+  {
+    "id": "adm-cursos-bootstrap-2026-09-09-rules",
+    "content": "Reglas: (1) database.sql es fuente de verdad; ampliarlo antes de nuevas entidades; (2) no commitear node_modules, target, dist, .env, ni DBs de Headroom/CBM; (3) un clone en UN path = un indice CBM + un proxy Headroom en 127.0.0.1:8787; no compartir puerto con FactuStock/StockSQL; (4) FE no ejecuta SQL; (5) libs FE segun libraries-npm.md; (6) al cambiar de PC: reindex CBM full+persistence, headroom memory import del seed versionable; (7) scaffold Tauri greet no es dominio — no tratarlo como feature.",
+    "user_id": "adm-cursos",
+    "session_id": null,
+    "agent_id": null,
+    "turn_id": null,
+    "created_at": "2026-09-09T12:00:04",
+    "valid_from": "2026-09-09T12:00:04",
+    "valid_until": null,
+    "importance": 0.95,
+    "entity_refs": [
+      "gitignore",
+      "Headroom",
+      "database.sql",
+      "libraries-npm.md"
+    ],
+    "metadata": {
+      "source": "bootstrap-2026-09-09",
+      "type": "conventions"
+    }
+  },
+  {
+    "id": "adm-cursos-bootstrap-2026-09-09-domain-map",
+    "content": "Mapa de dominio: docs/domain-map.md alineado a database.sql v1.1 (2026-09-09, alcance profesor no director). Schema: jurisdicciones, escuelas como lugares donde dicta, cursos con orientacion opcional, ciclos 1-7 (CABA 1-5 / PBA 1-6 / tecnico 7). Fuera: matricula institucional, plantel, boletines, SIEE. Scaffold Tauri greet aun sin CRUD. CBM id = path absoluto por maquina.",
+    "user_id": "adm-cursos",
+    "session_id": null,
+    "agent_id": null,
+    "turn_id": null,
+    "created_at": "2026-09-09T12:00:05",
+    "valid_from": "2026-09-09T12:00:05",
+    "valid_until": null,
+    "importance": 0.93,
+    "entity_refs": [
+      "docs/domain-map.md",
+      "Escuela",
+      "Curso",
+      "Alumno"
+    ],
+    "metadata": {
+      "source": "bootstrap-2026-09-09",
+      "type": "domain-map"
+    }
+  },
+  {
+    "id": "adm-cursos-bootstrap-2026-09-09-headroom",
+    "content": "Headroom: proxy .\\.headroom\\start-proxy.ps1 en 127.0.0.1:8787 (mode=token, memory=project, code_graph=true). MCP es headroom mcp serve --proxy-url http://127.0.0.1:8787 (stdio en .grok/config.toml). Sin proxy, Grok marca headroom timeout. Python 3.13 only. Seed versionable .headroom/seed-memories.json; DBs locales no viajan entre PCs. Setup: .\\.headroom\\setup-windows.ps1. CLI en esta maquina: C:\\Python313\\Scripts\\headroom.exe (0.36.5 al bootstrap).",
+    "user_id": "adm-cursos",
+    "session_id": null,
+    "agent_id": null,
+    "turn_id": null,
+    "created_at": "2026-09-09T12:00:06",
+    "valid_from": "2026-09-09T12:00:06",
+    "valid_until": null,
+    "importance": 0.9,
+    "entity_refs": [
+      "Headroom",
+      "start-proxy.ps1"
+    ],
+    "metadata": {
+      "source": "bootstrap-2026-09-09",
+      "type": "tooling"
+    }
+  }
+]

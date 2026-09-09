@@ -1,0 +1,35 @@
+# === Dependencias y builds ===
+node_modules/
+**/node_modules/
+**/target/
+**/out/
+**/dist/
+**/dist-ssr/
+**/build/
+**/package-lock.json
+**/Cargo.lock
+
+# === Caches y temporales ===
+.git/
+.github/
+.cache/
+.tmp/
+terminals/
+mcps/
+.headroom/
+.grok/
+.codebase-memory/
+**/*.log
+**/.env*
+**/*.min.js
+**/*.bundle.*
+
+# === Artefactos Tauri / frontend ===
+**/icons/
+**/src-tauri/gen/
+**/*.sqlite
+**/*.sqlite-journal
+
+# === Utilidades locales ===
+tree.txt
+tree_utf8.txt

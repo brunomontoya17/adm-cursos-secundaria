@@ -1,0 +1,23 @@
+# Configuración de Headroom para Adm Cursos Secundaria
+# Repositorio canónico: https://github.com/headroomlabs-ai/headroom
+# Paquete PyPI: headroom-ai  →  CLI `headroom`
+# Instalar: py -3.13 -m pip install "headroom-ai[all]"
+# NO usar Python 3.14. Solo Python 3.13 en esta máquina.
+# El proxy debe arrancarse desde la raíz del proyecto para que --code-graph funcione.
+# No compartir :8787 con FactuStock ni StockSQL.
+
+[proxy]
+port = 8787
+host = "127.0.0.1"
+mode = "token"
+memory = true
+memory_storage = "project"
+code_graph = true
+read_lifecycle = true
+
+[proxy.protect_tool_results]
+tools = ["Read", "Grep", "Shell", "Glob", "WebFetch"]
+
+[memory]
+top_k = 10
+min_evidence = 5

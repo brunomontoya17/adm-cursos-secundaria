@@ -1,0 +1,54 @@
+# Adm Cursos Secundaria — raíz
+
+# --- Dependencias y builds ---
+**/node_modules/
+**/dist/
+**/dist-ssr/
+**/target/
+**/out/
+**/build/
+
+# --- Tauri ---
+adm-cursos-secundaria/src-tauri/gen/
+
+# --- Entorno ---
+.env
+.env.*
+!.env.example
+
+# --- Grok (local) ---
+.grok/config.toml
+!.grok/config.example.toml
+.grok/sessions/
+.grok/logs/
+.grok/*.log
+mcps/
+terminals/
+
+# --- Headroom: estado local (config, seed y scripts SÍ se versionan) ---
+.headroom/memory.db
+.headroom/memory_*.db
+.headroom/logs/
+.headroom/memories/
+.headroom/*.db
+
+# --- Codebase Memory ---
+.codebase-memory/
+*.db.zst
+
+# --- SQLite runtime ---
+**/*.sqlite
+**/*.sqlite-journal
+**/*.sqlite-wal
+**/*.sqlite-shm
+**/*.db
+!.headroom/seed-memories.json
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+*.tmp
+*.temp
+*.bak
+tree.txt
+tree_utf8.txt

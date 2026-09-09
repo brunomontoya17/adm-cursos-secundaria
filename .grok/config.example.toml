@@ -1,0 +1,28 @@
+[features]
+codebase_indexing = true
+
+[mcp_servers.codebase-memory]
+# Ruta al binario local (Windows por defecto).
+# Valor típico: %LOCALAPPDATA%\Programs\codebase-memory-mcp\codebase-memory-mcp.exe
+command = "__CODEBASE_MEMORY_MCP_PATH__"
+args = []
+enabled = true
+startup_timeout_sec = 30
+tool_timeout_sec = 120
+
+# Headroom MCP (tools: compress / retrieve / stats).
+# NO es el proxy :8787 — es `headroom mcp serve` (stdio).
+# El proxy se levanta aparte: .\.headroom\start-proxy.ps1
+# Sin proxy, Grok marca este server como timeout.
+# Setup Win10: .\.headroom\setup-windows.ps1  luego  .\.headroom\start-proxy.ps1
+[mcp_servers.headroom]
+command = "__HEADROOM_EXE_PATH__"
+args = [
+  "mcp",
+  "serve",
+  "--proxy-url",
+  "http://127.0.0.1:8787",
+]
+enabled = true
+startup_timeout_sec = 45
+tool_timeout_sec = 60

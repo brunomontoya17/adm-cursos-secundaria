@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+/*
+  Paleta tomada de docs/Logo y paleta de colores.jpeg
+  (muestras RGB del propio archivo).
+*/
+@theme {
+  --color-paper: #f8f7f3;
+  --color-cream: #fef4ea;
+  --color-navy: #0b2540;
+  --color-navy-deep: #081e36;
+  --color-navy-mid: #123457;
+  --color-crimson: #b43b42;
+  --color-sky: #8b9da7;
+  --color-ink: #0b2540;
+  --font-serif: "Palatino Linotype", Palatino, "Book Antiqua", "Times New Roman", serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+}
+
+a {
+  color: inherit;
+}
+
+nav[aria-label="Menú principal"] a:link,
+nav[aria-label="Menú principal"] a:visited {
+  color: var(--color-paper);
+}
+
+nav[aria-label="Menú principal"] a[aria-current="page"],
+nav[aria-label="Menú principal"] a[aria-current="page"]:link,
+nav[aria-label="Menú principal"] a[aria-current="page"]:visited {
+  color: var(--color-navy);
+}
