@@ -328,7 +328,11 @@ export const materiaWriteSchema = materiaSchema.omit({ id: true }).extend({
 export const cursoWriteSchema = cursoSchema.omit({ id: true }).extend({
   nombre: z.string().min(1, "El nombre es obligatorio."),
 });
-export const alumnoWriteSchema = alumnoSchema.omit({ id: true });
+export const alumnoWriteSchema = alumnoSchema.omit({ id: true }).extend({
+  nombre: z.string().min(1, "El nombre es obligatorio."),
+  apellido: z.string().min(1, "El apellido es obligatorio."),
+  email: z.string().email("El email no es válido.").nullable(),
+});
 export const alumnoCursoWriteSchema = alumnoCursoSchema.omit({ id: true });
 export const horarioWriteSchema = horarioSchema.omit({ id: true });
 export const eventoWriteSchema = eventoSchema.omit({ id: true });
@@ -409,4 +413,19 @@ export const api = {
   updateCurso: (id: number, curso: CursoWrite) =>
     invokeChecked("update_curso", cursoSchema, { id, curso }),
   deleteCurso: (id: number) => invokeChecked("delete_curso", voidResultSchema, { id }),
+  listAlumnos: () => invokeChecked("list_alumnos", z.array(alumnoSchema)),
+  getAlumno: (id: number) => invokeChecked("get_alumno", alumnoSchema, { id }),
+  createAlumno: (alumno: AlumnoWrite) =>
+    invokeChecked("create_alumno", alumnoSchema, { alumno }),
+  updateAlumno: (id: number, alumno: AlumnoWrite) =>
+    invokeChecked("update_alumno", alumnoSchema, { id, alumno }),
+  deleteAlumno: (id: number) => invokeChecked("delete_alumno", voidResultSchema, { id }),
+  listAlumnosDeCurso: (id_curso: number) =>
+    invokeChecked("list_alumnos_de_curso", z.array(alumnoSchema), { id_curso }),
+  listInscripciones: (id_anio_lectivo: number) =>
+    invokeChecked("list_inscripciones", z.array(alumnoCursoSchema), { id_anio_lectivo }),
+  inscribirAlumno: (id_alumno: number, id_curso: number) =>
+    invokeChecked("inscribir_alumno", alumnoCursoSchema, { id_alumno, id_curso }),
+  desinscribirAlumno: (id_alumno: number, id_curso: number) =>
+    invokeChecked("desinscribir_alumno", voidResultSchema, { id_alumno, id_curso }),
 };

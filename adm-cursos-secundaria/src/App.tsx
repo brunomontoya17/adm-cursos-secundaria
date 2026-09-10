@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import Inicio from "./pages/Inicio";
 import Cursos from "./pages/Cursos";
 import CursoFicha from "./pages/CursoFicha";
+import Alumnos from "./pages/Alumnos";
 import Escuelas from "./pages/Escuelas";
 import Seccion from "./pages/Seccion";
 import AppShell from "./shell/AppShell";
@@ -15,7 +16,7 @@ function App() {
           <Route index element={<Inicio />} />
           <Route path="cursos" element={<Cursos />} />
           <Route path="cursos/:id" element={<CursoFicha />} />
-          <Route path="alumnos" element={<Seccion titulo="Alumnos" />} />
+          <Route path="alumnos" element={<Alumnos />} />
           <Route path="escuelas" element={<Escuelas />} />
           <Route path="horarios" element={<Seccion titulo="Horarios" />} />
           <Route path="calendario" element={<Seccion titulo="Calendario" />} />

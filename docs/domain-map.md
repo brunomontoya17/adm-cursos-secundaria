@@ -113,7 +113,7 @@ React (src/)  --invoke-->  Rust commands (src-tauri)
 - Feedback: react-toastify + sweetalert2. Iconos: `lucide-react`. Gráficos: `recharts`.
 - Estilos: `tailwindcss`. Fechas: Temporal. Catálogo: [`libraries-npm.md`](../libraries-npm.md).
 
-Estado 2026-09-09: schema dominio v1.2 (primaria + secundaria). Rust abre SQLite con `PRAGMA foreign_keys = ON`, aplica `database.sql` si la DB está vacía, y migra v1.1 → v1.2 (niveles + grados) si ya había tablas. IPC: `src/api.ts` (Zod) ↔ `src-tauri/src/domain.rs`; argumentos de comando en snake_case (`rename_all` en Rust). Pasos 0–2 del [roadmap](./roadmap.md) listos (shell, escuelas/materias/año, cursos). Siguiente: alumnos e inscripción.
+Estado 2026-09-10: schema dominio v1.2 (primaria + secundaria). Rust abre SQLite con `PRAGMA foreign_keys = ON`, aplica `database.sql` si la DB está vacía, y migra v1.1 → v1.2 (niveles + grados) si ya había tablas. IPC: `src/api.ts` (Zod) ↔ `src-tauri/src/domain.rs`; argumentos de comando en snake_case (`rename_all` en Rust). Pasos 0–3 del [roadmap](./roadmap.md) listos (shell, escuelas/materias/año, cursos, alumnos e inscripción). Siguiente: horarios.
 
 ## 6. Reglas para agentes
 

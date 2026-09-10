@@ -1,8 +1,11 @@
-import { useEffect, useState } from "react";
+import { createColumnHelper } from "@tanstack/react-table";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
   api,
+  alumnoWriteSchema,
+  type Alumno,
   type Ciclo,
   type Curso,
   type Escuela,
@@ -10,7 +13,8 @@ import {
   type Nivel,
 } from "../api";
 import { confirmAction } from "../feedback";
-import { btnDanger, btnGhost, btnPrimary } from "../form";
+import { blankToNull, btnDanger, btnGhost, btnLink, btnPrimary, inputClass } from "../form";
+import { DataTable, tableFeaturesBase } from "../ui/DataTable";
 
 function Dato({ label, value }: { label: string; value: string }) {
   return (
@@ -138,8 +142,9 @@ function CursoFicha() {
         <Dato label="Orientación" value={curso.orientacion ?? "—"} />
       </dl>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Placeholder titulo="Alumnos" detalle="Nómina de este dictado (paso 3)." />
+      <NominaCurso cursoId={curso.id} cursoNombre={curso.nombre} />
+
+      <div className="grid gap-4 lg:grid-cols-2">
         <Placeholder titulo="Horario" detalle="Día y hora de este dictado (paso 4)." />
         <Placeholder titulo="Próximas fechas" detalle="Evaluaciones y eventos (pasos 5 y 8)." />
       </div>
@@ -152,6 +157,219 @@ function Placeholder({ titulo, detalle }: { titulo: string; detalle: string }) {
     <div className="border border-dashed border-navy/20 p-4">
       <h3 className="font-medium text-navy">{titulo}</h3>
       <p className="mt-1 text-sm text-sky">{detalle}</p>
+    </div>
+  );
+}
+
+const nominaHelper = createColumnHelper<typeof tableFeaturesBase, Alumno>();
+const EMPTY_NOMINA: Alumno[] = [];
+
+function NominaCurso({ cursoId, cursoNombre }: { cursoId: number; cursoNombre: string }) {
+  const [nomina, setNomina] = useState<Alumno[]>([]);
+  const [todos, setTodos] = useState<Alumno[]>([]);
+  const [apellido, setApellido] = useState("");
+  const [nombre, setNombre] = useState("");
+  const [dni, setDni] = useState("");
+  const [idExistente, setIdExistente] = useState("");
+  const [formError, setFormError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const reload = useCallback(async () => {
+    try {
+      const [deEste, personas] = await Promise.all([
+        api.listAlumnosDeCurso(cursoId),
+        api.listAlumnos(),
+      ]);
+      setNomina(deEste);
+      setTodos(personas);
+    } catch {
+      /* Swal */
+    }
+  }, [cursoId]);
+
+  useEffect(() => {
+    void reload();
+  }, [reload]);
+
+  const idsNomina = useMemo(() => new Set(nomina.map((a) => a.id)), [nomina]);
+  const candidatos = useMemo(
+    () => todos.filter((a) => !idsNomina.has(a.id)),
+    [idsNomina, todos],
+  );
+
+  async function onAltaRapida(event: FormEvent) {
+    event.preventDefault();
+    setFormError(null);
+    const parsed = alumnoWriteSchema.safeParse({
+      nombre: nombre.trim(),
+      apellido: apellido.trim(),
+      dni: blankToNull(dni),
+      email: null,
+      telefono: null,
+      fecha_nacimiento: null,
+    });
+    if (!parsed.success) {
+      setFormError(parsed.error.issues[0]?.message ?? "Datos inválidos");
+      return;
+    }
+    setSaving(true);
+    try {
+      const creado = await api.createAlumno(parsed.data);
+      await api.inscribirAlumno(creado.id, cursoId);
+      toast.success("Alumno en la nómina");
+      setApellido("");
+      setNombre("");
+      setDni("");
+      await reload();
+    } catch {
+      /* Swal */
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function onElegirExistente(event: FormEvent) {
+    event.preventDefault();
+    const id = Number(idExistente);
+    if (!Number.isFinite(id) || id <= 0) {
+      setFormError("Elegí un alumno existente.");
+      return;
+    }
+    setFormError(null);
+    try {
+      await api.inscribirAlumno(id, cursoId);
+      toast.success("Inscripción guardada");
+      setIdExistente("");
+      await reload();
+    } catch {
+      /* Swal */
+    }
+  }
+
+  async function onDarDeBaja(row: Alumno) {
+    const ok = await confirmAction({
+      title: "¿Dar de baja de este dictado?",
+      text: `${row.apellido}, ${row.nombre} deja ${cursoNombre}. Se borran notas, asistencias y observaciones de este curso.`,
+      confirmText: "Dar de baja",
+      danger: true,
+    });
+    if (!ok) return;
+    try {
+      await api.desinscribirAlumno(row.id, cursoId);
+      toast.success("Baja de la nómina");
+      await reload();
+    } catch {
+      /* Swal */
+    }
+  }
+
+  const columns = useMemo(
+    () =>
+      nominaHelper.columns([
+        nominaHelper.accessor("apellido", { header: "Apellido" }),
+        nominaHelper.accessor("nombre", { header: "Nombre" }),
+        nominaHelper.accessor("dni", {
+          header: "DNI",
+          cell: (ctx) => ctx.getValue() ?? "—",
+        }),
+        nominaHelper.display({
+          id: "acciones",
+          header: "",
+          cell: (ctx) => {
+            const row = ctx.row.original;
+            return (
+              <span className="flex justify-end">
+                <button type="button" className={btnDanger} onClick={() => void onDarDeBaja(row)}>
+                  Dar de baja
+                </button>
+              </span>
+            );
+          },
+        }),
+      ]),
+    [nomina],
+  );
+
+  return (
+    <div className="space-y-4 border border-navy/15 p-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 className="font-medium text-navy">Alumnos de este dictado</h3>
+        <Link to="/alumnos" className={`${btnLink} no-underline`}>
+          Ver todas las personas
+        </Link>
+      </div>
+
+      <form className="grid gap-3 sm:grid-cols-4" onSubmit={onAltaRapida}>
+        <label className="space-y-1 sm:col-span-1">
+          <span className="text-xs font-medium uppercase tracking-wide text-sky">Apellido</span>
+          <input
+            required
+            className={inputClass}
+            value={apellido}
+            onChange={(e) => setApellido(e.target.value)}
+            placeholder="Pérez"
+          />
+        </label>
+        <label className="space-y-1 sm:col-span-1">
+          <span className="text-xs font-medium uppercase tracking-wide text-sky">Nombre</span>
+          <input
+            required
+            className={inputClass}
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            placeholder="Juan"
+          />
+        </label>
+        <label className="space-y-1 sm:col-span-1">
+          <span className="text-xs font-medium uppercase tracking-wide text-sky">DNI</span>
+          <input
+            className={inputClass}
+            value={dni}
+            onChange={(e) => setDni(e.target.value)}
+            placeholder="Opcional"
+          />
+        </label>
+        <div className="flex items-end">
+          <button type="submit" className={btnPrimary} disabled={saving}>
+            Alta en este curso
+          </button>
+        </div>
+      </form>
+
+      <form className="flex flex-wrap items-end gap-2" onSubmit={onElegirExistente}>
+        <label className="min-w-[14rem] flex-1 space-y-1">
+          <span className="text-xs font-medium uppercase tracking-wide text-sky">
+            Elegir existente
+          </span>
+          <select
+            className={inputClass}
+            value={idExistente}
+            onChange={(e) => setIdExistente(e.target.value)}
+            disabled={candidatos.length === 0}
+          >
+            <option value="">
+              {candidatos.length === 0 ? "No hay otras personas" : "Alumno ya cargado…"}
+            </option>
+            {candidatos.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.apellido}, {a.nombre}
+                {a.dni ? ` · ${a.dni}` : ""}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button type="submit" className={btnGhost} disabled={!idExistente}>
+          Inscribir
+        </button>
+      </form>
+
+      {formError && <p className="text-sm text-crimson">{formError}</p>}
+
+      <DataTable
+        columns={columns}
+        data={nomina.length > 0 ? nomina : EMPTY_NOMINA}
+        empty="Nadie en este dictado todavía. Alta rápida arriba o elegí una persona existente."
+      />
     </div>
   );
 }

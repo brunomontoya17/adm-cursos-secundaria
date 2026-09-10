@@ -164,6 +164,16 @@ pub struct Alumno {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct AlumnoWrite {
+    pub nombre: String,
+    pub apellido: String,
+    pub dni: Option<String>,
+    pub email: Option<String>,
+    pub telefono: Option<String>,
+    pub fecha_nacimiento: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct AlumnoCurso {
     pub id: i64,
     pub id_alumno: i64,

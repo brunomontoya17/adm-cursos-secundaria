@@ -25,8 +25,8 @@ function Inicio() {
         {activo ? `Año lectivo ${activo.anio}` : "Sin año lectivo activo"}
       </p>
       <p className="mt-2 max-w-md text-center text-sm text-sky">
-        Cargá las escuelas (primaria y/o secundaria) y las materias que das. Después se arman
-        los cursos: un 3° grado y un 3° año pueden convivir en el mismo colegio.
+        Cargá escuelas, materias y cursos. Después la nómina: el mismo alumno puede estar en
+        más de un dictado.
       </p>
       <div className="mt-4 flex flex-wrap justify-center gap-2">
         <Link
@@ -40,6 +40,12 @@ function Inicio() {
           className="border border-navy px-4 py-2 text-sm text-navy no-underline hover:bg-cream"
         >
           Cursos
+        </Link>
+        <Link
+          to="/alumnos"
+          className="border border-navy px-4 py-2 text-sm text-navy no-underline hover:bg-cream"
+        >
+          Alumnos
         </Link>
       </div>
       {dbStatus && (

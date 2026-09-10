@@ -86,8 +86,14 @@ pub fn map_sql_error(err: rusqlite::Error) -> String {
     if msg.contains("ux_anios_lectivos_activo") || msg.contains("anios_lectivos.activo") {
         return "Solo puede haber un año lectivo activo.".into();
     }
+    if msg.contains("alumnos.dni") {
+        return "Ya existe un alumno con ese DNI.".into();
+    }
+    if msg.contains("alumnos_cursos.id_alumno") && msg.contains("alumnos_cursos.id_curso") {
+        return "Ese alumno ya está inscripto en este curso.".into();
+    }
     if msg.contains("FOREIGN KEY constraint failed") {
-        return "No se puede borrar: hay cursos u otros datos que lo usan.".into();
+        return "No se puede completar: falta un dato vinculado o hay registros que lo usan.".into();
     }
     msg
 }

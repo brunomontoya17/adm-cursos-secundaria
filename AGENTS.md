@@ -28,7 +28,7 @@ Administrador de cursos de escritorio para **un docente** de PBA y/o CABA que qu
 
 **Marca:** `docs/Logo y paleta de colores.jpeg` — paleta en `src/index.css` (`paper`, `navy`, `crimson`, `cream`, `sky`); logo centrado en la ventana (`public/logo.jpeg`).
 
-**Tablas en `database.sql`:** catálogos (`niveles`, `turnos`, `divisiones`, `ciclos`, `anios_lectivos`, `jurisdicciones`, `tipos_*`, `estados_asistencia`); maestras (`escuelas`, `materias`, `cursos`, `alumnos`, `alumnos_cursos`, `horarios`); operativa (`eventos`, `evaluaciones`, `notas`, `observaciones`, `asistencias`). Schema v1.2. DBs v1.1: Rust migra `niveles` + ciclos por nivel sin borrar datos.
+**Tablas en `database.sql`:** catálogos (`niveles`, `turnos`, `divisiones`, `ciclos`, `anios_lectivos`, `jurisdicciones`, `tipos_*`, `estados_asistencia`); maestras (`escuelas`, `materias`, `cursos`, `alumnos`, `alumnos_cursos`, `horarios`); operativa (`eventos`, `evaluaciones`, `notas`, `observaciones`, `asistencias`). Schema v1.2. DBs v1.1: Rust migra `niveles` + ciclos por nivel sin borrar datos. UI lista hasta paso 3 (alumnos e inscripción).
 
 Los exámenes viven en `evaluaciones` (el calendario de exámenes se deriva de ahí). `eventos` es el quehacer del profesor (tema, entrega, reunión, junta, acto/sin clase, otro), no el calendario institucional. Notas y ponderaciones son **TEXT** decimal. Asistencia = esa hora de clase, no el registro oficial del colegio.
 
@@ -58,7 +58,7 @@ Instaladas en `adm-cursos-secundaria/package.json`. Tailwind v4 (`@tailwindcss/v
 - Al abrir: si la DB no tiene tablas de usuario, se aplica `database.sql` (sin reejecutar los `PRAGMA` del archivo). Si ya hay tablas, no se corren los `DROP`.
 - Archivo runtime: `{app_data_dir}/adm-cursos.sqlite`. Comando `db_status` para verificar pragmas.
 - Tipos `serde` en el borde Tauri; no filtrar filas crudas sin DTO.
-- Comandos de dominio: `maestras.rs` (escuelas, materias, años, catálogos) y `cursos.rs`. Errores SQL se mapean a mensajes en español (`db::map_sql_error`).
+- Comandos de dominio: `maestras.rs` (escuelas, materias, años, catálogos), `cursos.rs` y `alumnos.rs` (persona + `alumnos_cursos`). Errores SQL se mapean a mensajes en español (`db::map_sql_error`).
 
 ## Tooling de contexto
 

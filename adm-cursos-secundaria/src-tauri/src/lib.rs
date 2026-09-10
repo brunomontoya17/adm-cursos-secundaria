@@ -1,3 +1,4 @@
+mod alumnos;
 mod cursos;
 mod db;
 pub mod domain;
@@ -56,6 +57,15 @@ pub fn run() {
             cursos::create_curso,
             cursos::update_curso,
             cursos::delete_curso,
+            alumnos::list_alumnos,
+            alumnos::get_alumno,
+            alumnos::create_alumno,
+            alumnos::update_alumno,
+            alumnos::delete_alumno,
+            alumnos::list_alumnos_de_curso,
+            alumnos::list_inscripciones,
+            alumnos::inscribir_alumno,
+            alumnos::desinscribir_alumno,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
