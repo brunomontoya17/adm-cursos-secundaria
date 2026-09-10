@@ -23,7 +23,7 @@ Fuera de este roadmap (a propósito): login, multi-profesor, matrícula instituc
 
 ---
 
-## Ya está (pasos 0–9)
+## Ya está (pasos 0–10)
 
 - **0 Shell.** Tauri 1280×720, paleta y logo, menú izquierdo, HashRouter, SQLite con `PRAGMA foreign_keys=ON`, `db_status`, contrato Zod/serde. Schema **v1.2**: catálogo `niveles`, ciclos por nivel (grado ≠ año), migración desde DBs v1.1.
 - **1 Escuelas, materias y año lectivo.** `/escuelas` (CRUD escuelas + panel materias). Año activo en cabecera: ver, crear el siguiente, activar uno solo.
@@ -35,8 +35,7 @@ Fuera de este roadmap (a propósito): login, multi-profesor, matrícula instituc
 - **7 Asistencia.** `/asistencia` pase de lista (curso + fecha, default hoy; presente/ausente/tarde/justificado; marcar todos presentes). También en la ficha del curso.
 - **8 Calendario.** `/calendario` mes + lista del año activo: eventos (alta) y evaluaciones (solo lectura). Tema/entrega con curso; junta/acto/otro pueden ir sueltos.
 - **9 Observaciones.** `/observaciones` filtrable (curso / alumno / tipo / fecha). Alta también desde la ficha del curso y al editar un alumno. El alumno tiene que estar inscripto.
-
-Siguiente: paso 10 (inicio / resumen del día).
+- **10 Inicio.** `/` resumen del día: horario de hoy, eventos/evaluaciones de la fecha, próximas evaluaciones (14 días), año activo en cabecera, gráfico opcional de promedio por curso.
 
 ---
 
@@ -170,7 +169,7 @@ Siguiente: paso 10 (inicio / resumen del día).
 
 ---
 
-## Paso 10 — Inicio (resumen del día)
+## Paso 10 — Inicio (resumen del día) **(hecho)**
 
 **Para qué.** Abrir la app y ver qué toca hoy, no el logo solo.
 
@@ -200,7 +199,7 @@ Opcional en el mismo paso o justo después: un gráfico simple (Recharts) de pro
 7 Asistencia                (hecho)
 8 Calendario (eventos)      (hecho)
 9 Observaciones              (hecho)
-10 Inicio (hoy)
+10 Inicio (hoy)              (hecho)
 ```
 
 1→3 es el **alta inicial** (sin nómina no hay notas ni lista). 4 da contexto de “qué toca hoy”. 5→6 es el ciclo de evaluación. 7 es el otro gesto diario. 8 y 9 completan el quehacer. 10 se hace al final para no inventar un dashboard vacío.

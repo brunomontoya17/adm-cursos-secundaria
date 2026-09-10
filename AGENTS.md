@@ -26,9 +26,9 @@ Administrador de cursos de escritorio para **un docente** de PBA y/o CABA que qu
 
 **Actor:** un solo docente. Solo existe lo que carga porque dicta ahí (varias escuelas, PBA y CABA, **primaria y secundaria** a la vez). Caso testigo: profesor de inglés con horas en primaria y en secundaria. Maestro de grado: un curso por grupo, materia «Grado» o las áreas que separe. **Sin login ni usuarios.** Un **curso** es un dictado: materia + grupo (nivel + ciclo/división/turno) + escuela + año lectivo. El **ciclo** es grado (primaria) o año (secundaria); 3° grado ≠ 3° año. El alumno es persona de *sus* cursos; inscripción en `alumnos_cursos`. Un año lectivo activo. Fuera: inicial/jardín.
 
-**Marca:** `docs/Logo y paleta de colores.jpeg` — paleta en `src/index.css` (`paper`, `navy`, `crimson`, `cream`, `sky`); logo centrado en la ventana (`public/logo.jpeg`).
+**Marca:** `docs/Logo y paleta de colores.jpeg` — paleta en `src/index.css` (`paper`, `navy`, `crimson`, `cream`, `sky`); logo chico en cabecera e Inicio (`public/logo.jpeg`).
 
-**Tablas en `database.sql`:** catálogos (`niveles`, `turnos`, `divisiones`, `ciclos`, `anios_lectivos`, `jurisdicciones`, `tipos_*`, `estados_asistencia`); maestras (`escuelas`, `materias`, `cursos`, `alumnos`, `alumnos_cursos`, `horarios`); operativa (`eventos`, `evaluaciones`, `notas`, `observaciones`, `asistencias`). Schema v1.2. DBs v1.1: Rust migra `niveles` + ciclos por nivel sin borrar datos. UI lista hasta paso 9 (observaciones). Icono de ventana: `src-tauri/icons/` generado del logo.
+**Tablas en `database.sql`:** catálogos (`niveles`, `turnos`, `divisiones`, `ciclos`, `anios_lectivos`, `jurisdicciones`, `tipos_*`, `estados_asistencia`); maestras (`escuelas`, `materias`, `cursos`, `alumnos`, `alumnos_cursos`, `horarios`); operativa (`eventos`, `evaluaciones`, `notas`, `observaciones`, `asistencias`). Schema v1.2. DBs v1.1: Rust migra `niveles` + ciclos por nivel sin borrar datos. UI lista hasta paso 10 (Inicio = resumen del día). Icono de ventana: `src-tauri/icons/` generado del logo.
 
 Los exámenes viven en `evaluaciones` (el calendario de exámenes se deriva de ahí). `eventos` es el quehacer del profesor (tema, entrega, reunión, junta, acto/sin clase, otro), no el calendario institucional. Notas y ponderaciones son **TEXT** decimal. Asistencia = esa hora de clase, no el registro oficial del colegio.
 

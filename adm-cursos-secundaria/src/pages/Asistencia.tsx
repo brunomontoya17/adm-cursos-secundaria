@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
   api,
@@ -227,9 +227,12 @@ export function AsistenciaCursoPanel({
 
 function Asistencia() {
   const { activo } = useAnioLectivo();
+  const [searchParams] = useSearchParams();
+  const cursoQ = searchParams.get("curso") ?? "";
+  const fechaQ = searchParams.get("fecha") ?? "";
   const [cursos, setCursos] = useState<Curso[]>([]);
-  const [idCurso, setIdCurso] = useState("");
-  const [fecha, setFecha] = useState(hoyIso);
+  const [idCurso, setIdCurso] = useState(cursoQ);
+  const [fecha, setFecha] = useState(fechaQ || hoyIso());
 
   useEffect(() => {
     if (!activo) {
@@ -243,7 +246,8 @@ function Asistencia() {
         const rows = await api.listCursos(activo.id);
         if (cancelled) return;
         setCursos(rows);
-        setIdCurso((prev) => prev || (rows[0] ? String(rows[0].id) : ""));
+        setIdCurso((prev) => prev || cursoQ || (rows[0] ? String(rows[0].id) : ""));
+        if (fechaQ) setFecha(fechaQ);
       } catch {
         /* Swal */
       }
@@ -251,7 +255,7 @@ function Asistencia() {
     return () => {
       cancelled = true;
     };
-  }, [activo]);
+  }, [activo, cursoQ, fechaQ]);
 
   const curso = cursos.find((c) => String(c.id) === idCurso) ?? null;
 

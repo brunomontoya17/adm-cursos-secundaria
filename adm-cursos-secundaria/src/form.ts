@@ -37,10 +37,31 @@ export function formatDecimal(value: Decimal | null, places = 2): string {
   return value.toDecimalPlaces(places).toFixed(places);
 }
 
+const DIAS_ISO = [
+  "lunes",
+  "martes",
+  "miércoles",
+  "jueves",
+  "viernes",
+  "sábado",
+  "domingo",
+] as const;
+
 export function formatFecha(iso: string): string {
   try {
     const d = Temporal.PlainDate.from(iso);
     return `${String(d.day).padStart(2, "0")}/${String(d.month).padStart(2, "0")}`;
+  } catch {
+    return iso;
+  }
+}
+
+/** «jueves 12/09» — para el resumen del día. */
+export function formatFechaConDia(iso: string): string {
+  try {
+    const d = Temporal.PlainDate.from(iso);
+    const dia = DIAS_ISO[d.dayOfWeek - 1] ?? "";
+    return dia ? `${dia} ${formatFecha(iso)}` : formatFecha(iso);
   } catch {
     return iso;
   }
