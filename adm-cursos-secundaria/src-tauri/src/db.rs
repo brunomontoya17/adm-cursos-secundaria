@@ -66,9 +66,23 @@ impl Db {
     }
 }
 
+/// Error de invariante de app (no de SQLite). `map_sql_error` devuelve el texto tal cual.
+pub fn app_err(msg: impl Into<String>) -> rusqlite::Error {
+    rusqlite::Error::ToSqlConversionFailure(Box::new(std::io::Error::new(
+        std::io::ErrorKind::InvalidInput,
+        msg.into(),
+    )))
+}
+
 pub fn map_sql_error(err: rusqlite::Error) -> String {
     if matches!(err, rusqlite::Error::QueryReturnedNoRows) {
         return "No se encontró el registro.".into();
+    }
+    if let rusqlite::Error::ToSqlConversionFailure(inner) = &err {
+        let s = inner.to_string();
+        if !s.is_empty() {
+            return s;
+        }
     }
     let msg = err.to_string();
     if msg.contains("escuelas.id_jurisdiccion") && msg.contains("escuelas.nombre") {

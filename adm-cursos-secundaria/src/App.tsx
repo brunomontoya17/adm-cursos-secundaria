@@ -5,6 +5,7 @@ import CursoFicha from "./pages/CursoFicha";
 import Alumnos from "./pages/Alumnos";
 import Escuelas from "./pages/Escuelas";
 import Horarios from "./pages/Horarios";
+import Evaluaciones from "./pages/Evaluaciones";
 import Seccion from "./pages/Seccion";
 import AppShell from "./shell/AppShell";
 import { AnioLectivoProvider } from "./shell/AnioLectivoContext";
@@ -21,7 +22,7 @@ function App() {
           <Route path="escuelas" element={<Escuelas />} />
           <Route path="horarios" element={<Horarios />} />
           <Route path="calendario" element={<Seccion titulo="Calendario" />} />
-          <Route path="evaluaciones" element={<Seccion titulo="Evaluaciones" />} />
+          <Route path="evaluaciones" element={<Evaluaciones />} />
           <Route path="notas" element={<Seccion titulo="Notas" />} />
           <Route path="observaciones" element={<Seccion titulo="Observaciones" />} />
           <Route path="asistencia" element={<Seccion titulo="Asistencia" />} />

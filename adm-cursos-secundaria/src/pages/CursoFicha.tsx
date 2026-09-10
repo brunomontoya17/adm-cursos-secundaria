@@ -15,6 +15,7 @@ import {
 import { confirmAction } from "../feedback";
 import { blankToNull, btnDanger, btnGhost, btnLink, btnPrimary, inputClass } from "../form";
 import { DataTable, tableFeaturesBase } from "../ui/DataTable";
+import { EvaluacionesCursoPanel } from "./Evaluaciones";
 import { HorarioCursoPanel } from "./Horarios";
 
 function Dato({ label, value }: { label: string; value: string }) {
@@ -147,18 +148,9 @@ function CursoFicha() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <HorarioCursoPanel cursoId={curso.id} cursoNombre={curso.nombre} />
-        <Placeholder titulo="Próximas fechas" detalle="Evaluaciones y eventos (pasos 5 y 8)." />
+        <EvaluacionesCursoPanel cursoId={curso.id} cursoNombre={curso.nombre} />
       </div>
     </section>
-  );
-}
-
-function Placeholder({ titulo, detalle }: { titulo: string; detalle: string }) {
-  return (
-    <div className="border border-dashed border-navy/20 p-4">
-      <h3 className="font-medium text-navy">{titulo}</h3>
-      <p className="mt-1 text-sm text-sky">{detalle}</p>
-    </div>
   );
 }
 

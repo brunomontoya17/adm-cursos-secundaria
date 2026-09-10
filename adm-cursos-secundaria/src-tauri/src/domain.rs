@@ -223,6 +223,17 @@ pub struct Evaluacion {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct EvaluacionWrite {
+    pub id_curso: i64,
+    pub id_tipo_evaluacion: i64,
+    pub id_evaluacion_origen: Option<i64>,
+    pub titulo: String,
+    pub fecha: String,
+    pub tema: Option<String>,
+    pub ponderacion: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Nota {
     pub id: i64,
     pub id_evaluacion: i64,

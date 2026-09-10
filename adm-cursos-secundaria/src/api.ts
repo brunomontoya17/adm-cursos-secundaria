@@ -367,7 +367,16 @@ export const horarioWriteSchema = horarioSchema.omit({ id: true }).superRefine((
   }
 });
 export const eventoWriteSchema = eventoSchema.omit({ id: true });
-export const evaluacionWriteSchema = evaluacionSchema.omit({ id: true });
+export const evaluacionWriteSchema = evaluacionSchema.omit({ id: true }).extend({
+  titulo: z.string().min(1, "El título es obligatorio."),
+  ponderacion: decimalTextSchema.refine((value) => {
+    try {
+      return new Decimal(value).gt(0);
+    } catch {
+      return false;
+    }
+  }, "La ponderación debe ser mayor que 0."),
+});
 export const notaWriteSchema = notaObjectSchema.omit({ id: true }).superRefine(notaAusenteRule);
 export const observacionWriteSchema = observacionSchema.omit({ id: true });
 export const asistenciaWriteSchema = asistenciaSchema.omit({ id: true });
@@ -419,6 +428,8 @@ export const api = {
   listDivisiones: () => invokeChecked("list_divisiones", z.array(divisionSchema)),
   listNiveles: () => invokeChecked("list_niveles", z.array(nivelSchema)),
   listCiclos: () => invokeChecked("list_ciclos", z.array(cicloSchema)),
+  listTiposEvaluacion: () =>
+    invokeChecked("list_tipos_evaluacion", z.array(tipoEvaluacionSchema)),
   listEscuelas: () => invokeChecked("list_escuelas", z.array(escuelaSchema)),
   createEscuela: (escuela: EscuelaWrite) =>
     invokeChecked("create_escuela", escuelaSchema, { escuela }),
@@ -468,4 +479,15 @@ export const api = {
   updateHorario: (id: number, horario: HorarioWrite) =>
     invokeChecked("update_horario", horarioSchema, { id, horario }),
   deleteHorario: (id: number) => invokeChecked("delete_horario", voidResultSchema, { id }),
+  listEvaluaciones: (id_anio_lectivo: number) =>
+    invokeChecked("list_evaluaciones", z.array(evaluacionSchema), { id_anio_lectivo }),
+  listEvaluacionesDeCurso: (id_curso: number) =>
+    invokeChecked("list_evaluaciones_de_curso", z.array(evaluacionSchema), { id_curso }),
+  getEvaluacion: (id: number) => invokeChecked("get_evaluacion", evaluacionSchema, { id }),
+  createEvaluacion: (evaluacion: EvaluacionWrite) =>
+    invokeChecked("create_evaluacion", evaluacionSchema, { evaluacion }),
+  updateEvaluacion: (id: number, evaluacion: EvaluacionWrite) =>
+    invokeChecked("update_evaluacion", evaluacionSchema, { id, evaluacion }),
+  deleteEvaluacion: (id: number) =>
+    invokeChecked("delete_evaluacion", voidResultSchema, { id }),
 };

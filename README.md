@@ -27,6 +27,6 @@ Tras un cambio en Rust hay que **reiniciar** `npm run tauri dev`; el HMR del fro
 
 ## Estado
 
-Pasos **0–4** del [roadmap](docs/roadmap.md): shell, escuelas/materias/año lectivo, cursos, alumnos e inscripción, y horarios. Schema `database.sql` **v1.2**. Siguiente: evaluaciones.
+Pasos **0–5** del [roadmap](docs/roadmap.md): shell, escuelas/materias/año lectivo, cursos, alumnos, horarios y evaluaciones. Schema `database.sql` **v1.2**. Siguiente: notas.
 
 Repositorio: [brunomontoya17/adm-cursos-secundaria](https://github.com/brunomontoya17/adm-cursos-secundaria).

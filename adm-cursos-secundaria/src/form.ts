@@ -1,6 +1,25 @@
+import { Temporal } from "@js-temporal/polyfill";
+
 export function blankToNull(value: string): string | null {
   const trimmed = value.trim();
   return trimmed.length === 0 ? null : trimmed;
+}
+
+export function normalizeDecimalText(value: string): string {
+  return value.trim().replace(",", ".");
+}
+
+export function formatFecha(iso: string): string {
+  try {
+    const d = Temporal.PlainDate.from(iso);
+    return `${String(d.day).padStart(2, "0")}/${String(d.month).padStart(2, "0")}`;
+  } catch {
+    return iso;
+  }
+}
+
+export function hoyIso(): string {
+  return Temporal.Now.plainDateISO().toString();
 }
 
 /** `input type="time"` a veces manda HH:MM:SS; el dominio es HH:MM. */
