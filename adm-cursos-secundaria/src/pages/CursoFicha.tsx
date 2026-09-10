@@ -19,6 +19,7 @@ import { EvaluacionesCursoPanel } from "./Evaluaciones";
 import { HorarioCursoPanel } from "./Horarios";
 import { NotasCursoPanel } from "./Notas";
 import { AsistenciaCursoPanel } from "./Asistencia";
+import { EventosCursoPanel } from "./Calendario";
 
 function Dato({ label, value }: { label: string; value: string }) {
   return (
@@ -151,10 +152,11 @@ function CursoFicha() {
       <div className="grid gap-4 lg:grid-cols-2">
         <HorarioCursoPanel cursoId={curso.id} cursoNombre={curso.nombre} />
         <EvaluacionesCursoPanel cursoId={curso.id} cursoNombre={curso.nombre} />
+        <EventosCursoPanel cursoId={curso.id} cursoNombre={curso.nombre} />
+        <AsistenciaCursoPanel cursoId={curso.id} cursoNombre={curso.nombre} />
       </div>
 
       <NotasCursoPanel cursoId={curso.id} cursoNombre={curso.nombre} />
-      <AsistenciaCursoPanel cursoId={curso.id} cursoNombre={curso.nombre} />
     </section>
   );
 }

@@ -211,6 +211,16 @@ pub struct Evento {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct EventoWrite {
+    pub id_curso: Option<i64>,
+    pub id_tipo_evento: i64,
+    pub fecha: String,
+    pub hora: Option<String>,
+    pub titulo: String,
+    pub descripcion: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Evaluacion {
     pub id: i64,
     pub id_curso: i64,

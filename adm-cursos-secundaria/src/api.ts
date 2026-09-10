@@ -366,7 +366,9 @@ export const horarioWriteSchema = horarioSchema.omit({ id: true }).superRefine((
     });
   }
 });
-export const eventoWriteSchema = eventoSchema.omit({ id: true });
+export const eventoWriteSchema = eventoSchema.omit({ id: true }).extend({
+  titulo: z.string().min(1, "El título es obligatorio."),
+});
 export const evaluacionWriteSchema = evaluacionSchema.omit({ id: true }).extend({
   titulo: z.string().min(1, "El título es obligatorio."),
   ponderacion: decimalTextSchema.refine((value) => {
@@ -444,6 +446,7 @@ export const api = {
   listCiclos: () => invokeChecked("list_ciclos", z.array(cicloSchema)),
   listTiposEvaluacion: () =>
     invokeChecked("list_tipos_evaluacion", z.array(tipoEvaluacionSchema)),
+  listTiposEvento: () => invokeChecked("list_tipos_evento", z.array(tipoEventoSchema)),
   listEstadosAsistencia: () =>
     invokeChecked("list_estados_asistencia", z.array(estadoAsistenciaSchema)),
   listEscuelas: () => invokeChecked("list_escuelas", z.array(escuelaSchema)),
@@ -522,4 +525,13 @@ export const api = {
     }),
   deleteAsistencia: (id: number) =>
     invokeChecked("delete_asistencia", voidResultSchema, { id }),
+  listEventos: (id_anio_lectivo: number) =>
+    invokeChecked("list_eventos", z.array(eventoSchema), { id_anio_lectivo }),
+  listEventosDeCurso: (id_curso: number) =>
+    invokeChecked("list_eventos_de_curso", z.array(eventoSchema), { id_curso }),
+  createEvento: (evento: EventoWrite) =>
+    invokeChecked("create_evento", eventoSchema, { evento }),
+  updateEvento: (id: number, evento: EventoWrite) =>
+    invokeChecked("update_evento", eventoSchema, { id, evento }),
+  deleteEvento: (id: number) => invokeChecked("delete_evento", voidResultSchema, { id }),
 };

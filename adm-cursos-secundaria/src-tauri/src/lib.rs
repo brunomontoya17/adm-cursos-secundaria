@@ -4,6 +4,7 @@ mod cursos;
 mod db;
 pub mod domain;
 mod evaluaciones;
+mod eventos;
 mod horarios;
 mod maestras;
 mod notas;
@@ -46,6 +47,7 @@ pub fn run() {
             maestras::list_turnos,
             maestras::list_divisiones,
             maestras::list_tipos_evaluacion,
+            maestras::list_tipos_evento,
             maestras::list_estados_asistencia,
             maestras::list_escuelas,
             maestras::create_escuela,
@@ -90,6 +92,11 @@ pub fn run() {
             asistencias::upsert_asistencia,
             asistencias::marcar_asistencias_presentes,
             asistencias::delete_asistencia,
+            eventos::list_eventos,
+            eventos::list_eventos_de_curso,
+            eventos::create_evento,
+            eventos::update_evento,
+            eventos::delete_evento,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
