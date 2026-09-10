@@ -5,6 +5,7 @@ pub mod domain;
 mod evaluaciones;
 mod horarios;
 mod maestras;
+mod notas;
 
 use tauri::Manager;
 
@@ -80,6 +81,9 @@ pub fn run() {
             evaluaciones::create_evaluacion,
             evaluaciones::update_evaluacion,
             evaluaciones::delete_evaluacion,
+            notas::list_notas_de_curso,
+            notas::upsert_nota,
+            notas::delete_nota,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

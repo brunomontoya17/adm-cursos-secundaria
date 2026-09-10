@@ -25,8 +25,8 @@ function Inicio() {
         {activo ? `Año lectivo ${activo.anio}` : "Sin año lectivo activo"}
       </p>
       <p className="mt-2 max-w-md text-center text-sm text-sky">
-        Cargá escuelas, materias, cursos, nómina y horario. Las evaluaciones (escrito, oral, TP)
-        viven acá; el calendario de exámenes se arma con esas fechas.
+        Cargá escuelas, materias, cursos, nómina, horario y evaluaciones. Las notas se cargan
+        en la planilla del dictado (1–10 o ausente).
       </p>
       <div className="mt-4 flex flex-wrap justify-center gap-2">
         <Link
@@ -58,6 +58,12 @@ function Inicio() {
           className="border border-navy px-4 py-2 text-sm text-navy no-underline hover:bg-cream"
         >
           Evaluaciones
+        </Link>
+        <Link
+          to="/notas"
+          className="border border-navy px-4 py-2 text-sm text-navy no-underline hover:bg-cream"
+        >
+          Notas
         </Link>
       </div>
       {dbStatus && (

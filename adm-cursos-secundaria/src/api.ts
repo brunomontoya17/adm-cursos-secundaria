@@ -377,7 +377,21 @@ export const evaluacionWriteSchema = evaluacionSchema.omit({ id: true }).extend(
     }
   }, "La ponderación debe ser mayor que 0."),
 });
-export const notaWriteSchema = notaObjectSchema.omit({ id: true }).superRefine(notaAusenteRule);
+export const notaWriteSchema = notaObjectSchema
+  .omit({ id: true })
+  .extend({
+    valor: decimalTextSchema
+      .refine((value) => {
+        try {
+          const d = new Decimal(value);
+          return d.gte(1) && d.lte(10);
+        } catch {
+          return false;
+        }
+      }, "La nota tiene que estar entre 1 y 10.")
+      .nullable(),
+  })
+  .superRefine(notaAusenteRule);
 export const observacionWriteSchema = observacionSchema.omit({ id: true });
 export const asistenciaWriteSchema = asistenciaSchema.omit({ id: true });
 
@@ -490,4 +504,9 @@ export const api = {
     invokeChecked("update_evaluacion", evaluacionSchema, { id, evaluacion }),
   deleteEvaluacion: (id: number) =>
     invokeChecked("delete_evaluacion", voidResultSchema, { id }),
+  listNotasDeCurso: (id_curso: number) =>
+    invokeChecked("list_notas_de_curso", z.array(notaSchema), { id_curso }),
+  upsertNota: (nota: NotaWrite) =>
+    invokeChecked("upsert_nota", notaSchema.nullable(), { nota }),
+  deleteNota: (id: number) => invokeChecked("delete_nota", voidResultSchema, { id }),
 };

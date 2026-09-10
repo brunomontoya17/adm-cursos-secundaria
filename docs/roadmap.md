@@ -23,7 +23,7 @@ Fuera de este roadmap (a propósito): login, multi-profesor, matrícula instituc
 
 ---
 
-## Ya está (pasos 0–5)
+## Ya está (pasos 0–6)
 
 - **0 Shell.** Tauri 1280×720, paleta y logo, menú izquierdo, HashRouter, SQLite con `PRAGMA foreign_keys=ON`, `db_status`, contrato Zod/serde. Schema **v1.2**: catálogo `niveles`, ciclos por nivel (grado ≠ año), migración desde DBs v1.1.
 - **1 Escuelas, materias y año lectivo.** `/escuelas` (CRUD escuelas + panel materias). Año activo en cabecera: ver, crear el siguiente, activar uno solo.
@@ -31,8 +31,9 @@ Fuera de este roadmap (a propósito): login, multi-profesor, matrícula instituc
 - **3 Alumnos.** `/alumnos` persona + inscripción a dictados del año activo. Nómina en la ficha del curso (alta rápida o existente).
 - **4 Horarios.** `/horarios` grilla ISO 1–7 del año activo; bloques también en la ficha del curso.
 - **5 Evaluaciones.** `/evaluaciones` del año activo (título, tipo, fecha, tema, ponderación TEXT, recuperatorio con origen). También en la ficha del curso.
+- **6 Notas.** `/notas` planilla alumno × evaluación (1–10 o ausente, promedio ponderado en pantalla). También en la ficha del curso.
 
-Siguiente: paso 6 (notas). El resto del menú sigue vacío.
+Siguiente: paso 7 (asistencia). El resto del menú sigue vacío.
 
 ---
 
@@ -109,7 +110,7 @@ Siguiente: paso 6 (notas). El resto del menú sigue vacío.
 
 ---
 
-## Paso 6 — Notas
+## Paso 6 — Notas **(hecho)**
 
 **Para qué.** El cuaderno de calificaciones. Es el corazón operativo después de tener nómina y evaluaciones.
 
@@ -192,7 +193,7 @@ Opcional en el mismo paso o justo después: un gráfico simple (Recharts) de pro
 3 Alumnos ↔ cursos           (hecho)
 4 Horarios                   (hecho)
 5 Evaluaciones               (hecho)
-6 Notas
+6 Notas                     (hecho)
 7 Asistencia
 8 Calendario (eventos)
 9 Observaciones

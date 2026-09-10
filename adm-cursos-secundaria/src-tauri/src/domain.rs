@@ -244,6 +244,15 @@ pub struct Nota {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct NotaWrite {
+    pub id_evaluacion: i64,
+    pub id_alumno: i64,
+    pub valor: Option<String>,
+    pub ausente: Flag01,
+    pub comentario: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Observacion {
     pub id: i64,
     pub id_alumno: i64,

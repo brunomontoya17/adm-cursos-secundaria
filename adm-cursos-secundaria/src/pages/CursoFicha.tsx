@@ -17,6 +17,7 @@ import { blankToNull, btnDanger, btnGhost, btnLink, btnPrimary, inputClass } fro
 import { DataTable, tableFeaturesBase } from "../ui/DataTable";
 import { EvaluacionesCursoPanel } from "./Evaluaciones";
 import { HorarioCursoPanel } from "./Horarios";
+import { NotasCursoPanel } from "./Notas";
 
 function Dato({ label, value }: { label: string; value: string }) {
   return (
@@ -150,6 +151,8 @@ function CursoFicha() {
         <HorarioCursoPanel cursoId={curso.id} cursoNombre={curso.nombre} />
         <EvaluacionesCursoPanel cursoId={curso.id} cursoNombre={curso.nombre} />
       </div>
+
+      <NotasCursoPanel cursoId={curso.id} cursoNombre={curso.nombre} />
     </section>
   );
 }

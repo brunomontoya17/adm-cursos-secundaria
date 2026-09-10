@@ -109,6 +109,14 @@ pub fn map_sql_error(err: rusqlite::Error) -> String {
     if msg.contains("horarios.id_curso") && msg.contains("horarios.dia_semana") {
         return "Ya hay un bloque de ese curso ese día a esa hora.".into();
     }
+    if msg.contains("notas.id_evaluacion") && msg.contains("notas.id_alumno") {
+        return "Ya hay una nota de ese alumno en esa evaluación.".into();
+    }
+    if msg.contains("CHECK constraint failed")
+        && msg.to_ascii_lowercase().contains("ausente")
+    {
+        return "Si está ausente, la nota tiene que quedar vacía.".into();
+    }
     if msg.contains("FOREIGN KEY constraint failed") {
         return "No se puede completar: falta un dato vinculado o hay registros que lo usan.".into();
     }

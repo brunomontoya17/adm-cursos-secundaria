@@ -1,4 +1,5 @@
 import { Temporal } from "@js-temporal/polyfill";
+import Decimal from "decimal.js";
 
 export function blankToNull(value: string): string | null {
   const trimmed = value.trim();
@@ -7,6 +8,33 @@ export function blankToNull(value: string): string | null {
 
 export function normalizeDecimalText(value: string): string {
   return value.trim().replace(",", ".");
+}
+
+/** Promedio ponderado en pantalla; no se persiste. Ausentes y celdas vacías no entran. */
+export function promedioPonderado(
+  items: { valor: string | null; ausente: 0 | 1; ponderacion: string }[],
+): Decimal | null {
+  let suma = new Decimal(0);
+  let pesos = new Decimal(0);
+  for (const item of items) {
+    if (item.ausente === 1 || item.valor === null || item.valor.trim() === "") continue;
+    try {
+      const v = new Decimal(item.valor);
+      const p = new Decimal(item.ponderacion);
+      if (!v.isFinite() || !p.isFinite() || p.lte(0)) continue;
+      suma = suma.plus(v.times(p));
+      pesos = pesos.plus(p);
+    } catch {
+      continue;
+    }
+  }
+  if (pesos.lte(0)) return null;
+  return suma.div(pesos);
+}
+
+export function formatDecimal(value: Decimal | null, places = 2): string {
+  if (!value) return "—";
+  return value.toDecimalPlaces(places).toFixed(places);
 }
 
 export function formatFecha(iso: string): string {
