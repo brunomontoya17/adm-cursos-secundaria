@@ -148,7 +148,10 @@ fn ensure_schema(conn: &Connection) -> rusqlite::Result<()> {
         conn.execute_batch(&schema_without_pragmas())?;
         return Ok(());
     }
-    migrate_niveles_y_ciclos(conn)
+    heal_ciclos_rename_leftovers(conn)?;
+    migrate_niveles_y_ciclos(conn)?;
+    repair_cursos_fk_ciclos_old(conn)?;
+    Ok(())
 }
 
 fn table_exists(conn: &Connection, name: &str) -> rusqlite::Result<bool> {
@@ -170,6 +173,75 @@ fn column_exists(conn: &Connection, table: &str, column: &str) -> rusqlite::Resu
         }
     }
     Ok(false)
+}
+
+/// SQLite 3.26+ reescribe FKs de otras tablas en un RENAME aunque `foreign_keys` esté OFF.
+/// Eso deja `cursos` apuntando a `ciclos_old` y el INSERT falla con "no such table: main.ciclos_old".
+/// `legacy_alter_table=ON` restaura el comportamiento viejo; el Drop vuelve a encender FKs.
+struct SchemaRebuildGuard<'a> {
+    conn: &'a Connection,
+}
+
+impl<'a> SchemaRebuildGuard<'a> {
+    fn enter(conn: &'a Connection) -> rusqlite::Result<Self> {
+        conn.pragma_update(None, "foreign_keys", false)?;
+        conn.pragma_update(None, "legacy_alter_table", true)?;
+        Ok(Self { conn })
+    }
+}
+
+impl Drop for SchemaRebuildGuard<'_> {
+    fn drop(&mut self) {
+        let _ = self.conn.pragma_update(None, "legacy_alter_table", false);
+        let _ = self.conn.pragma_update(None, "foreign_keys", true);
+    }
+}
+
+fn table_sql_contains(conn: &Connection, table: &str, needle: &str) -> rusqlite::Result<bool> {
+    use rusqlite::OptionalExtension;
+    let sql: Option<String> = conn
+        .query_row(
+            "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?1",
+            [table],
+            |row| row.get(0),
+        )
+        .optional()?;
+    Ok(sql
+        .map(|s| s.to_ascii_lowercase().contains(&needle.to_ascii_lowercase()))
+        .unwrap_or(false))
+}
+
+fn reset_sqlite_sequence(conn: &Connection, table: &str) -> rusqlite::Result<()> {
+    if !table_exists(conn, "sqlite_sequence")? {
+        return Ok(());
+    }
+    conn.execute("DELETE FROM sqlite_sequence WHERE name = ?1", [table])?;
+    conn.execute(
+        &format!(
+            "INSERT INTO sqlite_sequence (name, seq)
+             SELECT ?1, COALESCE(MAX(id), 0) FROM {table}"
+        ),
+        [table],
+    )?;
+    Ok(())
+}
+
+/// Si una migración anterior quedó a medias (`ciclos` renombrada y no restaurada).
+fn heal_ciclos_rename_leftovers(conn: &Connection) -> rusqlite::Result<()> {
+    let has_ciclos = table_exists(conn, "ciclos")?;
+    let has_old = table_exists(conn, "ciclos_old")?;
+    if has_old && !has_ciclos {
+        let _guard = SchemaRebuildGuard::enter(conn)?;
+        conn.execute("ALTER TABLE ciclos_old RENAME TO ciclos", [])?;
+        return Ok(());
+    }
+    if has_old && has_ciclos {
+        let _guard = SchemaRebuildGuard::enter(conn)?;
+        if column_exists(conn, "ciclos", "id_nivel")? {
+            conn.execute("DROP TABLE ciclos_old", [])?;
+        }
+    }
+    Ok(())
 }
 
 /// v1.1 → v1.2: niveles (primaria/secundaria) y ciclos por nivel (grado ≠ año).
@@ -211,11 +283,12 @@ fn rebuild_ciclos_con_nivel(conn: &Connection) -> rusqlite::Result<()> {
         [],
         |row| row.get(0),
     )?;
-    conn.pragma_update(None, "foreign_keys", false)?;
+    let _guard = SchemaRebuildGuard::enter(conn)?;
+    // 12 pasos de SQLite: tabla nueva → copiar → DROP → RENAME. No usar
+    // `ALTER TABLE ciclos RENAME TO ciclos_old` (reescribe la FK de cursos).
     conn.execute_batch(
         "
-        ALTER TABLE ciclos RENAME TO ciclos_old;
-        CREATE TABLE ciclos (
+        CREATE TABLE ciclos_new (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             id_nivel INTEGER NOT NULL,
             nombre TEXT NOT NULL,
@@ -227,22 +300,85 @@ fn rebuild_ciclos_con_nivel(conn: &Connection) -> rusqlite::Result<()> {
         ",
     )?;
     conn.execute(
-        "INSERT INTO ciclos (id, id_nivel, nombre, orden)
-         SELECT id, ?1, nombre, orden FROM ciclos_old",
+        "INSERT INTO ciclos_new (id, id_nivel, nombre, orden)
+         SELECT id, ?1, nombre, orden FROM ciclos",
         [secundaria_id],
     )?;
-    conn.execute("DROP TABLE ciclos_old", [])?;
-    conn.execute("DELETE FROM sqlite_sequence WHERE name = 'ciclos'", [])?;
-    conn.execute(
-        "INSERT INTO sqlite_sequence (name, seq)
-         SELECT 'ciclos', COALESCE(MAX(id), 0) FROM ciclos",
-        [],
+    conn.execute_batch(
+        "
+        DROP TABLE ciclos;
+        ALTER TABLE ciclos_new RENAME TO ciclos;
+        CREATE INDEX IF NOT EXISTS ix_ciclos_nivel ON ciclos (id_nivel);
+        ",
     )?;
-    conn.execute(
-        "CREATE INDEX IF NOT EXISTS ix_ciclos_nivel ON ciclos (id_nivel)",
-        [],
+    reset_sqlite_sequence(conn, "ciclos")?;
+    Ok(())
+}
+
+/// Bases ya migradas con el RENAME viejo: `cursos` sigue referenciando `ciclos_old`.
+fn repair_cursos_fk_ciclos_old(conn: &Connection) -> rusqlite::Result<()> {
+    if !table_exists(conn, "cursos")? {
+        return Ok(());
+    }
+    if !table_sql_contains(conn, "cursos", "ciclos_old")? {
+        return Ok(());
+    }
+    rebuild_cursos_fk_a_ciclos(conn)
+}
+
+fn rebuild_cursos_fk_a_ciclos(conn: &Connection) -> rusqlite::Result<()> {
+    let has_orientacion = column_exists(conn, "cursos", "orientacion")?;
+    let _guard = SchemaRebuildGuard::enter(conn)?;
+    conn.execute_batch(
+        "
+        CREATE TABLE cursos_new (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT NOT NULL,
+            id_escuela INTEGER NOT NULL,
+            id_turno INTEGER NOT NULL,
+            id_division INTEGER NOT NULL,
+            id_ciclo INTEGER NOT NULL,
+            id_materia INTEGER NOT NULL,
+            id_anio_lectivo INTEGER NOT NULL,
+            orientacion TEXT,
+            FOREIGN KEY (id_escuela) REFERENCES escuelas (id) ON DELETE RESTRICT,
+            FOREIGN KEY (id_turno) REFERENCES turnos (id) ON DELETE RESTRICT,
+            FOREIGN KEY (id_division) REFERENCES divisiones (id) ON DELETE RESTRICT,
+            FOREIGN KEY (id_ciclo) REFERENCES ciclos (id) ON DELETE RESTRICT,
+            FOREIGN KEY (id_materia) REFERENCES materias (id) ON DELETE RESTRICT,
+            FOREIGN KEY (id_anio_lectivo) REFERENCES anios_lectivos (id) ON DELETE RESTRICT,
+            UNIQUE (id_escuela, id_turno, id_division, id_ciclo, id_materia, id_anio_lectivo)
+        );
+        ",
     )?;
-    conn.pragma_update(None, "foreign_keys", true)?;
+    if has_orientacion {
+        conn.execute(
+            "INSERT INTO cursos_new (
+                id, nombre, id_escuela, id_turno, id_division, id_ciclo, id_materia, id_anio_lectivo, orientacion
+             )
+             SELECT id, nombre, id_escuela, id_turno, id_division, id_ciclo, id_materia, id_anio_lectivo, orientacion
+             FROM cursos",
+            [],
+        )?;
+    } else {
+        conn.execute(
+            "INSERT INTO cursos_new (
+                id, nombre, id_escuela, id_turno, id_division, id_ciclo, id_materia, id_anio_lectivo, orientacion
+             )
+             SELECT id, nombre, id_escuela, id_turno, id_division, id_ciclo, id_materia, id_anio_lectivo, NULL
+             FROM cursos",
+            [],
+        )?;
+    }
+    conn.execute_batch(
+        "
+        DROP TABLE cursos;
+        ALTER TABLE cursos_new RENAME TO cursos;
+        CREATE INDEX IF NOT EXISTS ix_cursos_anio ON cursos (id_anio_lectivo);
+        CREATE INDEX IF NOT EXISTS ix_cursos_escuela ON cursos (id_escuela);
+        ",
+    )?;
+    reset_sqlite_sequence(conn, "cursos")?;
     Ok(())
 }
 
@@ -431,7 +567,8 @@ mod tests {
             CREATE TABLE cursos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 nombre TEXT NOT NULL,
-                id_ciclo INTEGER NOT NULL
+                id_ciclo INTEGER NOT NULL,
+                FOREIGN KEY (id_ciclo) REFERENCES ciclos (id)
             );
             INSERT INTO cursos (nombre, id_ciclo) VALUES ('3° A', 3);
             ",
@@ -469,11 +606,113 @@ mod tests {
             )
             .unwrap();
         assert_eq!(grados, 7);
+        let cursos_sql: String = conn
+            .query_row(
+                "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'cursos'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
+        assert!(
+            !cursos_sql.to_ascii_lowercase().contains("ciclos_old"),
+            "la FK de cursos no debe quedar apuntando a ciclos_old: {cursos_sql}"
+        );
+        conn.execute(
+            "INSERT INTO cursos (nombre, id_ciclo) VALUES ('4° A', 4)",
+            [],
+        )
+        .expect("insertar curso después de migrar ciclos");
         prepare_connection(&conn).unwrap();
         let ciclos: i64 = conn
             .query_row("SELECT COUNT(*) FROM ciclos", [], |row| row.get(0))
             .unwrap();
         assert_eq!(ciclos, 14);
+    }
+
+    #[test]
+    fn repara_cursos_con_fk_a_ciclos_old() {
+        let conn = Connection::open_in_memory().unwrap();
+        apply_pragmas(&conn).unwrap();
+        conn.execute_batch(&schema_without_pragmas()).unwrap();
+        conn.execute(
+            "INSERT INTO escuelas (id_jurisdiccion, nombre) VALUES (1, 'Normal 1')",
+            [],
+        )
+        .unwrap();
+        conn.execute("INSERT INTO materias (nombre) VALUES ('Inglés')", [])
+            .unwrap();
+        conn.execute(
+            "INSERT INTO cursos (nombre, id_escuela, id_turno, id_division, id_ciclo, id_materia, id_anio_lectivo)
+             VALUES ('3° A Inglés', 1, 1, 1, 1, 1, 1)",
+            [],
+        )
+        .unwrap();
+
+        conn.pragma_update(None, "foreign_keys", false).unwrap();
+        conn.pragma_update(None, "legacy_alter_table", true).unwrap();
+        conn.execute_batch(
+            "
+            CREATE TABLE cursos_broken (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre TEXT NOT NULL,
+                id_escuela INTEGER NOT NULL,
+                id_turno INTEGER NOT NULL,
+                id_division INTEGER NOT NULL,
+                id_ciclo INTEGER NOT NULL,
+                id_materia INTEGER NOT NULL,
+                id_anio_lectivo INTEGER NOT NULL,
+                orientacion TEXT,
+                FOREIGN KEY (id_escuela) REFERENCES escuelas (id) ON DELETE RESTRICT,
+                FOREIGN KEY (id_turno) REFERENCES turnos (id) ON DELETE RESTRICT,
+                FOREIGN KEY (id_division) REFERENCES divisiones (id) ON DELETE RESTRICT,
+                FOREIGN KEY (id_ciclo) REFERENCES ciclos_old (id) ON DELETE RESTRICT,
+                FOREIGN KEY (id_materia) REFERENCES materias (id) ON DELETE RESTRICT,
+                FOREIGN KEY (id_anio_lectivo) REFERENCES anios_lectivos (id) ON DELETE RESTRICT,
+                UNIQUE (id_escuela, id_turno, id_division, id_ciclo, id_materia, id_anio_lectivo)
+            );
+            INSERT INTO cursos_broken
+                (id, nombre, id_escuela, id_turno, id_division, id_ciclo, id_materia, id_anio_lectivo, orientacion)
+            SELECT id, nombre, id_escuela, id_turno, id_division, id_ciclo, id_materia, id_anio_lectivo, orientacion
+            FROM cursos;
+            DROP TABLE cursos;
+            ALTER TABLE cursos_broken RENAME TO cursos;
+            ",
+        )
+        .unwrap();
+        conn.pragma_update(None, "legacy_alter_table", false).unwrap();
+        conn.pragma_update(None, "foreign_keys", true).unwrap();
+
+        let before = conn.execute(
+            "INSERT INTO cursos (nombre, id_escuela, id_turno, id_division, id_ciclo, id_materia, id_anio_lectivo)
+             VALUES ('1° B Inglés', 1, 1, 2, 1, 1, 1)",
+            [],
+        );
+        let err = before.expect_err("el INSERT debe fallar mientras la FK apunte a ciclos_old");
+        assert!(
+            err.to_string().contains("ciclos_old"),
+            "error inesperado: {err}"
+        );
+
+        prepare_connection(&conn).unwrap();
+
+        conn.execute(
+            "INSERT INTO cursos (nombre, id_escuela, id_turno, id_division, id_ciclo, id_materia, id_anio_lectivo)
+             VALUES ('1° B Inglés', 1, 1, 2, 1, 1, 1)",
+            [],
+        )
+        .expect("guardar curso después de reparar FK");
+        let n: i64 = conn
+            .query_row("SELECT COUNT(*) FROM cursos", [], |row| row.get(0))
+            .unwrap();
+        assert_eq!(n, 2);
+        let cursos_sql: String = conn
+            .query_row(
+                "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'cursos'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
+        assert!(!cursos_sql.to_ascii_lowercase().contains("ciclos_old"));
     }
 
     #[test]
