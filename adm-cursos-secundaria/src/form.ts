@@ -3,6 +3,13 @@ export function blankToNull(value: string): string | null {
   return trimmed.length === 0 ? null : trimmed;
 }
 
+/** `input type="time"` a veces manda HH:MM:SS; el dominio es HH:MM. */
+export function toHhMm(value: string): string {
+  const trimmed = value.trim();
+  const match = trimmed.match(/^([01]\d|2[0-3]):[0-5]\d/);
+  return match ? match[0].slice(0, 5) : trimmed;
+}
+
 export const inputClass =
   "w-full rounded-none border border-navy/20 bg-white px-3 py-2 text-sm text-navy outline-none focus:border-navy";
 

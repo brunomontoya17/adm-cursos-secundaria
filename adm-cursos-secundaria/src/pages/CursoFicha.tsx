@@ -15,6 +15,7 @@ import {
 import { confirmAction } from "../feedback";
 import { blankToNull, btnDanger, btnGhost, btnLink, btnPrimary, inputClass } from "../form";
 import { DataTable, tableFeaturesBase } from "../ui/DataTable";
+import { HorarioCursoPanel } from "./Horarios";
 
 function Dato({ label, value }: { label: string; value: string }) {
   return (
@@ -145,7 +146,7 @@ function CursoFicha() {
       <NominaCurso cursoId={curso.id} cursoNombre={curso.nombre} />
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Placeholder titulo="Horario" detalle="Día y hora de este dictado (paso 4)." />
+        <HorarioCursoPanel cursoId={curso.id} cursoNombre={curso.nombre} />
         <Placeholder titulo="Próximas fechas" detalle="Evaluaciones y eventos (pasos 5 y 8)." />
       </div>
     </section>

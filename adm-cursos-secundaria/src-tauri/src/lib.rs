@@ -2,6 +2,7 @@ mod alumnos;
 mod cursos;
 mod db;
 pub mod domain;
+mod horarios;
 mod maestras;
 
 use tauri::Manager;
@@ -66,6 +67,11 @@ pub fn run() {
             alumnos::list_inscripciones,
             alumnos::inscribir_alumno,
             alumnos::desinscribir_alumno,
+            horarios::list_horarios,
+            horarios::list_horarios_de_curso,
+            horarios::create_horario,
+            horarios::update_horario,
+            horarios::delete_horario,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

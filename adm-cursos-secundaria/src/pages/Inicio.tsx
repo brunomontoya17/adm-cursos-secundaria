@@ -25,8 +25,8 @@ function Inicio() {
         {activo ? `Año lectivo ${activo.anio}` : "Sin año lectivo activo"}
       </p>
       <p className="mt-2 max-w-md text-center text-sm text-sky">
-        Cargá escuelas, materias y cursos. Después la nómina: el mismo alumno puede estar en
-        más de un dictado.
+        Cargá escuelas, materias, cursos y la nómina. El horario es tu semana de dictados,
+        no la del colegio.
       </p>
       <div className="mt-4 flex flex-wrap justify-center gap-2">
         <Link
@@ -46,6 +46,12 @@ function Inicio() {
           className="border border-navy px-4 py-2 text-sm text-navy no-underline hover:bg-cream"
         >
           Alumnos
+        </Link>
+        <Link
+          to="/horarios"
+          className="border border-navy px-4 py-2 text-sm text-navy no-underline hover:bg-cream"
+        >
+          Horarios
         </Link>
       </div>
       {dbStatus && (

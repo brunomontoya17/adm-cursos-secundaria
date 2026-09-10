@@ -191,6 +191,15 @@ pub struct Horario {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct HorarioWrite {
+    pub id_curso: i64,
+    pub dia_semana: i64,
+    pub hora_inicio: String,
+    pub hora_fin: String,
+    pub aula: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Evento {
     pub id: i64,
     pub id_curso: Option<i64>,

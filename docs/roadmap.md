@@ -23,14 +23,15 @@ Fuera de este roadmap (a propósito): login, multi-profesor, matrícula instituc
 
 ---
 
-## Ya está (pasos 0–3)
+## Ya está (pasos 0–4)
 
 - **0 Shell.** Tauri 1280×720, paleta y logo, menú izquierdo, HashRouter, SQLite con `PRAGMA foreign_keys=ON`, `db_status`, contrato Zod/serde. Schema **v1.2**: catálogo `niveles`, ciclos por nivel (grado ≠ año), migración desde DBs v1.1.
 - **1 Escuelas, materias y año lectivo.** `/escuelas` (CRUD escuelas + panel materias). Año activo en cabecera: ver, crear el siguiente, activar uno solo.
 - **2 Cursos.** `/cursos` listado del año activo (filtro por nivel), alta con nivel → ciclo, etiqueta sugerida, edición y baja. Ficha `/cursos/:id` con resumen.
-- **3 Alumnos.** `/alumnos` persona + inscripción a dictados del año activo. Nómina en la ficha del curso (alta rápida o existente). Horario/fechas en la ficha aún placeholders.
+- **3 Alumnos.** `/alumnos` persona + inscripción a dictados del año activo. Nómina en la ficha del curso (alta rápida o existente).
+- **4 Horarios.** `/horarios` grilla ISO 1–7 del año activo; bloques también en la ficha del curso. Fechas (evaluaciones/eventos) en la ficha aún placeholder.
 
-Siguiente: paso 4 (horarios). El resto del menú sigue vacío.
+Siguiente: paso 5 (evaluaciones). El resto del menú sigue vacío.
 
 ---
 
@@ -80,7 +81,7 @@ Siguiente: paso 4 (horarios). El resto del menú sigue vacío.
 
 ---
 
-## Paso 4 — Horarios
+## Paso 4 — Horarios **(hecho)**
 
 **Para qué.** Saber qué dictado toca cada día. No es el horario del colegio.
 
@@ -188,7 +189,7 @@ Opcional en el mismo paso o justo después: un gráfico simple (Recharts) de pro
 1 Escuelas + materias + año  (hecho)
 2 Cursos                     (hecho)
 3 Alumnos ↔ cursos           (hecho)
-4 Horarios
+4 Horarios                   (hecho)
 5 Evaluaciones
 6 Notas
 7 Asistencia

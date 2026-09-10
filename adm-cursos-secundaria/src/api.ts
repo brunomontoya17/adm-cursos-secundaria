@@ -86,6 +86,21 @@ export const decimalTextSchema = z.string().refine((value) => {
 
 export const diaSemanaSchema = z.number().int().min(1).max(7);
 
+/** ISO 8601: 1 lunes … 7 domingo. */
+export const DIAS_SEMANA = [
+  { id: 1, nombre: "Lunes", corto: "Lun" },
+  { id: 2, nombre: "Martes", corto: "Mar" },
+  { id: 3, nombre: "Miércoles", corto: "Mié" },
+  { id: 4, nombre: "Jueves", corto: "Jue" },
+  { id: 5, nombre: "Viernes", corto: "Vie" },
+  { id: 6, nombre: "Sábado", corto: "Sáb" },
+  { id: 7, nombre: "Domingo", corto: "Dom" },
+] as const;
+
+export function nombreDia(dia: number): string {
+  return DIAS_SEMANA.find((d) => d.id === dia)?.nombre ?? String(dia);
+}
+
 export const JURISDICCION_CODIGOS = ["pba", "caba", "otra"] as const;
 export const NIVEL_CODIGOS = ["primaria", "secundaria"] as const;
 export const TIPO_EVENTO_CODIGOS = [
@@ -334,7 +349,23 @@ export const alumnoWriteSchema = alumnoSchema.omit({ id: true }).extend({
   email: z.string().email("El email no es válido.").nullable(),
 });
 export const alumnoCursoWriteSchema = alumnoCursoSchema.omit({ id: true });
-export const horarioWriteSchema = horarioSchema.omit({ id: true });
+export const horarioWriteSchema = horarioSchema.omit({ id: true }).superRefine((h, ctx) => {
+  try {
+    if (Temporal.PlainTime.from(h.hora_fin).since(Temporal.PlainTime.from(h.hora_inicio)).sign <= 0) {
+      ctx.addIssue({
+        code: "custom",
+        message: "La hora de fin debe ser posterior a la de inicio.",
+        path: ["hora_fin"],
+      });
+    }
+  } catch {
+    ctx.addIssue({
+      code: "custom",
+      message: "Hora inválida.",
+      path: ["hora_inicio"],
+    });
+  }
+});
 export const eventoWriteSchema = eventoSchema.omit({ id: true });
 export const evaluacionWriteSchema = evaluacionSchema.omit({ id: true });
 export const notaWriteSchema = notaObjectSchema.omit({ id: true }).superRefine(notaAusenteRule);
@@ -428,4 +459,13 @@ export const api = {
     invokeChecked("inscribir_alumno", alumnoCursoSchema, { id_alumno, id_curso }),
   desinscribirAlumno: (id_alumno: number, id_curso: number) =>
     invokeChecked("desinscribir_alumno", voidResultSchema, { id_alumno, id_curso }),
+  listHorarios: (id_anio_lectivo: number) =>
+    invokeChecked("list_horarios", z.array(horarioSchema), { id_anio_lectivo }),
+  listHorariosDeCurso: (id_curso: number) =>
+    invokeChecked("list_horarios_de_curso", z.array(horarioSchema), { id_curso }),
+  createHorario: (horario: HorarioWrite) =>
+    invokeChecked("create_horario", horarioSchema, { horario }),
+  updateHorario: (id: number, horario: HorarioWrite) =>
+    invokeChecked("update_horario", horarioSchema, { id, horario }),
+  deleteHorario: (id: number) => invokeChecked("delete_horario", voidResultSchema, { id }),
 };
