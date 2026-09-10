@@ -444,6 +444,8 @@ export const api = {
   listCiclos: () => invokeChecked("list_ciclos", z.array(cicloSchema)),
   listTiposEvaluacion: () =>
     invokeChecked("list_tipos_evaluacion", z.array(tipoEvaluacionSchema)),
+  listEstadosAsistencia: () =>
+    invokeChecked("list_estados_asistencia", z.array(estadoAsistenciaSchema)),
   listEscuelas: () => invokeChecked("list_escuelas", z.array(escuelaSchema)),
   createEscuela: (escuela: EscuelaWrite) =>
     invokeChecked("create_escuela", escuelaSchema, { escuela }),
@@ -509,4 +511,15 @@ export const api = {
   upsertNota: (nota: NotaWrite) =>
     invokeChecked("upsert_nota", notaSchema.nullable(), { nota }),
   deleteNota: (id: number) => invokeChecked("delete_nota", voidResultSchema, { id }),
+  listAsistencias: (id_curso: number, fecha: string) =>
+    invokeChecked("list_asistencias", z.array(asistenciaSchema), { id_curso, fecha }),
+  upsertAsistencia: (asistencia: AsistenciaWrite) =>
+    invokeChecked("upsert_asistencia", asistenciaSchema, { asistencia }),
+  marcarAsistenciasPresentes: (id_curso: number, fecha: string) =>
+    invokeChecked("marcar_asistencias_presentes", z.array(asistenciaSchema), {
+      id_curso,
+      fecha,
+    }),
+  deleteAsistencia: (id: number) =>
+    invokeChecked("delete_asistencia", voidResultSchema, { id }),
 };

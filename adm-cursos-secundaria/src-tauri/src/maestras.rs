@@ -2,8 +2,8 @@
 
 use crate::db::Db;
 use crate::domain::{
-    AnioLectivo, Ciclo, Division, Escuela, EscuelaWrite, Jurisdiccion, Materia, MateriaWrite,
-    Nivel, TipoEvaluacion, Turno,
+    AnioLectivo, Ciclo, Division, Escuela, EscuelaWrite, EstadoAsistencia, Jurisdiccion, Materia,
+    MateriaWrite, Nivel, TipoEvaluacion, Turno,
 };
 use rusqlite::{params, Connection, OptionalExtension};
 use tauri::State;
@@ -138,6 +138,19 @@ fn list_tipos_evaluacion_sql(conn: &Connection) -> rusqlite::Result<Vec<TipoEval
         conn.prepare("SELECT id, codigo, nombre FROM tipos_evaluacion ORDER BY id")?;
     let rows = stmt.query_map([], |row| {
         Ok(TipoEvaluacion {
+            id: row.get(0)?,
+            codigo: row.get(1)?,
+            nombre: row.get(2)?,
+        })
+    })?;
+    rows.collect()
+}
+
+fn list_estados_asistencia_sql(conn: &Connection) -> rusqlite::Result<Vec<EstadoAsistencia>> {
+    let mut stmt =
+        conn.prepare("SELECT id, codigo, nombre FROM estados_asistencia ORDER BY id")?;
+    let rows = stmt.query_map([], |row| {
+        Ok(EstadoAsistencia {
             id: row.get(0)?,
             codigo: row.get(1)?,
             nombre: row.get(2)?,
@@ -319,6 +332,11 @@ pub fn list_divisiones(db: State<'_, Db>) -> Result<Vec<Division>, String> {
 #[tauri::command(rename_all = "snake_case")]
 pub fn list_tipos_evaluacion(db: State<'_, Db>) -> Result<Vec<TipoEvaluacion>, String> {
     db.with_conn(list_tipos_evaluacion_sql)
+}
+
+#[tauri::command(rename_all = "snake_case")]
+pub fn list_estados_asistencia(db: State<'_, Db>) -> Result<Vec<EstadoAsistencia>, String> {
+    db.with_conn(list_estados_asistencia_sql)
 }
 
 #[tauri::command(rename_all = "snake_case")]

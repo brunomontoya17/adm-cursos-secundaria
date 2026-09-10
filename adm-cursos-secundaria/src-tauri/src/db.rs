@@ -112,6 +112,9 @@ pub fn map_sql_error(err: rusqlite::Error) -> String {
     if msg.contains("notas.id_evaluacion") && msg.contains("notas.id_alumno") {
         return "Ya hay una nota de ese alumno en esa evaluación.".into();
     }
+    if msg.contains("asistencias.id_curso") && msg.contains("asistencias.id_alumno") {
+        return "Ya hay asistencia de ese alumno en esa fecha.".into();
+    }
     if msg.contains("CHECK constraint failed")
         && msg.to_ascii_lowercase().contains("ausente")
     {

@@ -3,6 +3,9 @@ import { Link } from "react-router-dom";
 import { api, type DbStatus } from "../api";
 import { useAnioLectivo } from "../shell/AnioLectivoContext";
 
+const atajoInicio =
+  "border border-navy px-4 py-2 text-sm text-navy no-underline hover:bg-cream link:text-navy visited:text-navy";
+
 function Inicio() {
   const [dbStatus, setDbStatus] = useState<DbStatus | null>(null);
   const { activo } = useAnioLectivo();
@@ -25,45 +28,30 @@ function Inicio() {
         {activo ? `Año lectivo ${activo.anio}` : "Sin año lectivo activo"}
       </p>
       <p className="mt-2 max-w-md text-center text-sm text-sky">
-        Cargá escuelas, materias, cursos, nómina, horario y evaluaciones. Las notas se cargan
-        en la planilla del dictado (1–10 o ausente).
+        Cargá escuelas, materias, cursos, nómina, horario, evaluaciones y notas. El pase de
+        lista es de esa hora de clase.
       </p>
       <div className="mt-4 flex flex-wrap justify-center gap-2">
-        <Link
-          to="/escuelas"
-          className="bg-navy px-4 py-2 text-sm text-cream no-underline hover:bg-navy-mid"
-        >
+        <Link to="/escuelas" className={atajoInicio}>
           Escuelas y materias
         </Link>
-        <Link
-          to="/cursos"
-          className="border border-navy px-4 py-2 text-sm text-navy no-underline hover:bg-cream"
-        >
+        <Link to="/cursos" className={atajoInicio}>
           Cursos
         </Link>
-        <Link
-          to="/alumnos"
-          className="border border-navy px-4 py-2 text-sm text-navy no-underline hover:bg-cream"
-        >
+        <Link to="/alumnos" className={atajoInicio}>
           Alumnos
         </Link>
-        <Link
-          to="/horarios"
-          className="border border-navy px-4 py-2 text-sm text-navy no-underline hover:bg-cream"
-        >
+        <Link to="/horarios" className={atajoInicio}>
           Horarios
         </Link>
-        <Link
-          to="/evaluaciones"
-          className="border border-navy px-4 py-2 text-sm text-navy no-underline hover:bg-cream"
-        >
+        <Link to="/evaluaciones" className={atajoInicio}>
           Evaluaciones
         </Link>
-        <Link
-          to="/notas"
-          className="border border-navy px-4 py-2 text-sm text-navy no-underline hover:bg-cream"
-        >
+        <Link to="/notas" className={atajoInicio}>
           Notas
+        </Link>
+        <Link to="/asistencia" className={atajoInicio}>
+          Asistencia
         </Link>
       </div>
       {dbStatus && (

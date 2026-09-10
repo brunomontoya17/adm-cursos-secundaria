@@ -18,6 +18,7 @@ import { DataTable, tableFeaturesBase } from "../ui/DataTable";
 import { EvaluacionesCursoPanel } from "./Evaluaciones";
 import { HorarioCursoPanel } from "./Horarios";
 import { NotasCursoPanel } from "./Notas";
+import { AsistenciaCursoPanel } from "./Asistencia";
 
 function Dato({ label, value }: { label: string; value: string }) {
   return (
@@ -153,6 +154,7 @@ function CursoFicha() {
       </div>
 
       <NotasCursoPanel cursoId={curso.id} cursoNombre={curso.nombre} />
+      <AsistenciaCursoPanel cursoId={curso.id} cursoNombre={curso.nombre} />
     </section>
   );
 }

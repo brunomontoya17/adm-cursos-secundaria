@@ -23,7 +23,7 @@ Fuera de este roadmap (a propósito): login, multi-profesor, matrícula instituc
 
 ---
 
-## Ya está (pasos 0–6)
+## Ya está (pasos 0–7)
 
 - **0 Shell.** Tauri 1280×720, paleta y logo, menú izquierdo, HashRouter, SQLite con `PRAGMA foreign_keys=ON`, `db_status`, contrato Zod/serde. Schema **v1.2**: catálogo `niveles`, ciclos por nivel (grado ≠ año), migración desde DBs v1.1.
 - **1 Escuelas, materias y año lectivo.** `/escuelas` (CRUD escuelas + panel materias). Año activo en cabecera: ver, crear el siguiente, activar uno solo.
@@ -32,8 +32,9 @@ Fuera de este roadmap (a propósito): login, multi-profesor, matrícula instituc
 - **4 Horarios.** `/horarios` grilla ISO 1–7 del año activo; bloques también en la ficha del curso.
 - **5 Evaluaciones.** `/evaluaciones` del año activo (título, tipo, fecha, tema, ponderación TEXT, recuperatorio con origen). También en la ficha del curso.
 - **6 Notas.** `/notas` planilla alumno × evaluación (1–10 o ausente, promedio ponderado en pantalla). También en la ficha del curso.
+- **7 Asistencia.** `/asistencia` pase de lista (curso + fecha, default hoy; presente/ausente/tarde/justificado; marcar todos presentes). También en la ficha del curso.
 
-Siguiente: paso 7 (asistencia). El resto del menú sigue vacío.
+Siguiente: paso 8 (calendario / eventos). El resto del menú sigue vacío.
 
 ---
 
@@ -125,7 +126,7 @@ Siguiente: paso 7 (asistencia). El resto del menú sigue vacío.
 
 ---
 
-## Paso 7 — Asistencia
+## Paso 7 — Asistencia **(hecho)**
 
 **Para qué.** Pase de lista de **esa hora de clase**.
 
@@ -194,7 +195,7 @@ Opcional en el mismo paso o justo después: un gráfico simple (Recharts) de pro
 4 Horarios                   (hecho)
 5 Evaluaciones               (hecho)
 6 Notas                     (hecho)
-7 Asistencia
+7 Asistencia                (hecho)
 8 Calendario (eventos)
 9 Observaciones
 10 Inicio (hoy)

@@ -271,6 +271,14 @@ pub struct Asistencia {
     pub id_estado_asistencia: i64,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct AsistenciaWrite {
+    pub id_curso: i64,
+    pub id_alumno: i64,
+    pub fecha: String,
+    pub id_estado_asistencia: i64,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
