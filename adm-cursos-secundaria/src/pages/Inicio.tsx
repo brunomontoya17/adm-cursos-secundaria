@@ -28,9 +28,9 @@ function Inicio() {
         {activo ? `Año lectivo ${activo.anio}` : "Sin año lectivo activo"}
       </p>
       <p className="mt-2 max-w-md text-center text-sm text-sky">
-        Cargá escuelas, materias, cursos, nómina, horario, evaluaciones, notas y asistencia.
-        El calendario es el quehacer (temas, entregas, actos); los exámenes se ven ahí de
-        solo lectura.
+        Cargá escuelas, materias, cursos, nómina, horario, evaluaciones, notas, asistencia
+        y observaciones. El calendario es el quehacer (temas, entregas, actos); los
+        exámenes se ven ahí de solo lectura.
       </p>
       <div className="mt-4 flex flex-wrap justify-center gap-2">
         <Link to="/escuelas" className={atajoInicio}>
@@ -56,6 +56,9 @@ function Inicio() {
         </Link>
         <Link to="/calendario" className={atajoInicio}>
           Calendario
+        </Link>
+        <Link to="/observaciones" className={atajoInicio}>
+          Observaciones
         </Link>
       </div>
       {dbStatus && (

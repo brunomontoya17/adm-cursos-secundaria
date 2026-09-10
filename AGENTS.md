@@ -28,7 +28,7 @@ Administrador de cursos de escritorio para **un docente** de PBA y/o CABA que qu
 
 **Marca:** `docs/Logo y paleta de colores.jpeg` — paleta en `src/index.css` (`paper`, `navy`, `crimson`, `cream`, `sky`); logo centrado en la ventana (`public/logo.jpeg`).
 
-**Tablas en `database.sql`:** catálogos (`niveles`, `turnos`, `divisiones`, `ciclos`, `anios_lectivos`, `jurisdicciones`, `tipos_*`, `estados_asistencia`); maestras (`escuelas`, `materias`, `cursos`, `alumnos`, `alumnos_cursos`, `horarios`); operativa (`eventos`, `evaluaciones`, `notas`, `observaciones`, `asistencias`). Schema v1.2. DBs v1.1: Rust migra `niveles` + ciclos por nivel sin borrar datos. UI lista hasta paso 8 (calendario / eventos). Icono de ventana: `src-tauri/icons/` generado del logo.
+**Tablas en `database.sql`:** catálogos (`niveles`, `turnos`, `divisiones`, `ciclos`, `anios_lectivos`, `jurisdicciones`, `tipos_*`, `estados_asistencia`); maestras (`escuelas`, `materias`, `cursos`, `alumnos`, `alumnos_cursos`, `horarios`); operativa (`eventos`, `evaluaciones`, `notas`, `observaciones`, `asistencias`). Schema v1.2. DBs v1.1: Rust migra `niveles` + ciclos por nivel sin borrar datos. UI lista hasta paso 9 (observaciones). Icono de ventana: `src-tauri/icons/` generado del logo.
 
 Los exámenes viven en `evaluaciones` (el calendario de exámenes se deriva de ahí). `eventos` es el quehacer del profesor (tema, entrega, reunión, junta, acto/sin clase, otro), no el calendario institucional. Notas y ponderaciones son **TEXT** decimal. Asistencia = esa hora de clase, no el registro oficial del colegio.
 

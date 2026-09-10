@@ -9,7 +9,7 @@ import Evaluaciones from "./pages/Evaluaciones";
 import Notas from "./pages/Notas";
 import Asistencia from "./pages/Asistencia";
 import Calendario from "./pages/Calendario";
-import Seccion from "./pages/Seccion";
+import Observaciones from "./pages/Observaciones";
 import AppShell from "./shell/AppShell";
 import { AnioLectivoProvider } from "./shell/AnioLectivoContext";
 
@@ -27,7 +27,7 @@ function App() {
           <Route path="calendario" element={<Calendario />} />
           <Route path="evaluaciones" element={<Evaluaciones />} />
           <Route path="notas" element={<Notas />} />
-          <Route path="observaciones" element={<Seccion titulo="Observaciones" />} />
+          <Route path="observaciones" element={<Observaciones />} />
           <Route path="asistencia" element={<Asistencia />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

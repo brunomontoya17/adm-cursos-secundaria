@@ -20,6 +20,7 @@ import { HorarioCursoPanel } from "./Horarios";
 import { NotasCursoPanel } from "./Notas";
 import { AsistenciaCursoPanel } from "./Asistencia";
 import { EventosCursoPanel } from "./Calendario";
+import { ObservacionesCursoPanel } from "./Observaciones";
 
 function Dato({ label, value }: { label: string; value: string }) {
   return (
@@ -157,6 +158,8 @@ function CursoFicha() {
       </div>
 
       <NotasCursoPanel cursoId={curso.id} cursoNombre={curso.nombre} />
+
+      <ObservacionesCursoPanel cursoId={curso.id} cursoNombre={curso.nombre} />
     </section>
   );
 }

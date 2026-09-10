@@ -394,7 +394,9 @@ export const notaWriteSchema = notaObjectSchema
       .nullable(),
   })
   .superRefine(notaAusenteRule);
-export const observacionWriteSchema = observacionSchema.omit({ id: true });
+export const observacionWriteSchema = observacionSchema.omit({ id: true }).extend({
+  texto: z.string().min(1, "El texto es obligatorio."),
+});
 export const asistenciaWriteSchema = asistenciaSchema.omit({ id: true });
 
 export type Flag01 = z.infer<typeof flag01Schema>;
@@ -449,6 +451,8 @@ export const api = {
   listTiposEvento: () => invokeChecked("list_tipos_evento", z.array(tipoEventoSchema)),
   listEstadosAsistencia: () =>
     invokeChecked("list_estados_asistencia", z.array(estadoAsistenciaSchema)),
+  listTiposObservacion: () =>
+    invokeChecked("list_tipos_observacion", z.array(tipoObservacionSchema)),
   listEscuelas: () => invokeChecked("list_escuelas", z.array(escuelaSchema)),
   createEscuela: (escuela: EscuelaWrite) =>
     invokeChecked("create_escuela", escuelaSchema, { escuela }),
@@ -534,4 +538,19 @@ export const api = {
   updateEvento: (id: number, evento: EventoWrite) =>
     invokeChecked("update_evento", eventoSchema, { id, evento }),
   deleteEvento: (id: number) => invokeChecked("delete_evento", voidResultSchema, { id }),
+  listObservaciones: (id_anio_lectivo: number) =>
+    invokeChecked("list_observaciones", z.array(observacionSchema), { id_anio_lectivo }),
+  listObservacionesDeCurso: (id_curso: number) =>
+    invokeChecked("list_observaciones_de_curso", z.array(observacionSchema), { id_curso }),
+  listObservacionesDeAlumno: (id_alumno: number, id_anio_lectivo: number) =>
+    invokeChecked("list_observaciones_de_alumno", z.array(observacionSchema), {
+      id_alumno,
+      id_anio_lectivo,
+    }),
+  createObservacion: (observacion: ObservacionWrite) =>
+    invokeChecked("create_observacion", observacionSchema, { observacion }),
+  updateObservacion: (id: number, observacion: ObservacionWrite) =>
+    invokeChecked("update_observacion", observacionSchema, { id, observacion }),
+  deleteObservacion: (id: number) =>
+    invokeChecked("delete_observacion", voidResultSchema, { id }),
 };

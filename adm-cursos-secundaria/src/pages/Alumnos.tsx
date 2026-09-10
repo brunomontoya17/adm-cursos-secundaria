@@ -21,6 +21,7 @@ import {
 } from "../form";
 import { useAnioLectivo } from "../shell/AnioLectivoContext";
 import { DataTable, tableFeaturesBase } from "../ui/DataTable";
+import { ObservacionesAlumnoPanel } from "./Observaciones";
 
 const helper = createColumnHelper<typeof tableFeaturesBase, AlumnoRow>();
 const EMPTY: AlumnoRow[] = [];
@@ -243,6 +244,12 @@ function Alumnos() {
             const row = ctx.row.original;
             return (
               <span className="flex justify-end gap-1">
+                <Link
+                  to={`/observaciones?alumno=${row.id}`}
+                  className={`${btnLink} no-underline`}
+                >
+                  Observaciones
+                </Link>
                 <button type="button" className={btnLink} onClick={() => startEdit(row)}>
                   Editar
                 </button>
@@ -429,6 +436,15 @@ function Alumnos() {
             </button>
           </div>
         </div>
+      )}
+
+      {editando && (
+        <ObservacionesAlumnoPanel
+          alumno={editando}
+          cursos={inscEditando
+            .map((i) => cursosBy.get(i.id_curso))
+            .filter((c): c is Curso => Boolean(c))}
+        />
       )}
 
       <DataTable

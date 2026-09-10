@@ -8,6 +8,7 @@ mod eventos;
 mod horarios;
 mod maestras;
 mod notas;
+mod observaciones;
 
 use tauri::Manager;
 
@@ -49,6 +50,7 @@ pub fn run() {
             maestras::list_tipos_evaluacion,
             maestras::list_tipos_evento,
             maestras::list_estados_asistencia,
+            maestras::list_tipos_observacion,
             maestras::list_escuelas,
             maestras::create_escuela,
             maestras::update_escuela,
@@ -97,6 +99,12 @@ pub fn run() {
             eventos::create_evento,
             eventos::update_evento,
             eventos::delete_evento,
+            observaciones::list_observaciones,
+            observaciones::list_observaciones_de_curso,
+            observaciones::list_observaciones_de_alumno,
+            observaciones::create_observacion,
+            observaciones::update_observacion,
+            observaciones::delete_observacion,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

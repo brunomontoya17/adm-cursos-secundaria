@@ -23,7 +23,7 @@ Fuera de este roadmap (a propósito): login, multi-profesor, matrícula instituc
 
 ---
 
-## Ya está (pasos 0–8)
+## Ya está (pasos 0–9)
 
 - **0 Shell.** Tauri 1280×720, paleta y logo, menú izquierdo, HashRouter, SQLite con `PRAGMA foreign_keys=ON`, `db_status`, contrato Zod/serde. Schema **v1.2**: catálogo `niveles`, ciclos por nivel (grado ≠ año), migración desde DBs v1.1.
 - **1 Escuelas, materias y año lectivo.** `/escuelas` (CRUD escuelas + panel materias). Año activo en cabecera: ver, crear el siguiente, activar uno solo.
@@ -34,8 +34,9 @@ Fuera de este roadmap (a propósito): login, multi-profesor, matrícula instituc
 - **6 Notas.** `/notas` planilla alumno × evaluación (1–10 o ausente, promedio ponderado en pantalla). También en la ficha del curso.
 - **7 Asistencia.** `/asistencia` pase de lista (curso + fecha, default hoy; presente/ausente/tarde/justificado; marcar todos presentes). También en la ficha del curso.
 - **8 Calendario.** `/calendario` mes + lista del año activo: eventos (alta) y evaluaciones (solo lectura). Tema/entrega con curso; junta/acto/otro pueden ir sueltos.
+- **9 Observaciones.** `/observaciones` filtrable (curso / alumno / tipo / fecha). Alta también desde la ficha del curso y al editar un alumno. El alumno tiene que estar inscripto.
 
-Siguiente: paso 9 (observaciones). El resto del menú sigue vacío.
+Siguiente: paso 10 (inicio / resumen del día).
 
 ---
 
@@ -155,7 +156,7 @@ Siguiente: paso 9 (observaciones). El resto del menú sigue vacío.
 
 ---
 
-## Paso 9 — Observaciones
+## Paso 9 — Observaciones **(hecho)**
 
 **Para qué.** Anotaciones del profesor sobre un alumno **en ese dictado** (académica, conducta, seguimiento, reunión con familia).
 
@@ -198,7 +199,7 @@ Opcional en el mismo paso o justo después: un gráfico simple (Recharts) de pro
 6 Notas                     (hecho)
 7 Asistencia                (hecho)
 8 Calendario (eventos)      (hecho)
-9 Observaciones
+9 Observaciones              (hecho)
 10 Inicio (hoy)
 ```
 
