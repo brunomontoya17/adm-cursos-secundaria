@@ -13,7 +13,7 @@ import {
   type Nivel,
 } from "../api";
 import { confirmAction } from "../feedback";
-import { blankToNull, btnDanger, btnGhost, btnLink, btnPrimary, inputClass } from "../form";
+import { btnDanger, btnGhost, btnLink, btnPrimary, inputClass } from "../form";
 import { DataTable, tableFeaturesBase } from "../ui/DataTable";
 import { EvaluacionesCursoPanel } from "./Evaluaciones";
 import { HorarioCursoPanel } from "./Horarios";
@@ -172,7 +172,6 @@ function NominaCurso({ cursoId, cursoNombre }: { cursoId: number; cursoNombre: s
   const [todos, setTodos] = useState<Alumno[]>([]);
   const [apellido, setApellido] = useState("");
   const [nombre, setNombre] = useState("");
-  const [dni, setDni] = useState("");
   const [idExistente, setIdExistente] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -206,10 +205,6 @@ function NominaCurso({ cursoId, cursoNombre }: { cursoId: number; cursoNombre: s
     const parsed = alumnoWriteSchema.safeParse({
       nombre: nombre.trim(),
       apellido: apellido.trim(),
-      dni: blankToNull(dni),
-      email: null,
-      telefono: null,
-      fecha_nacimiento: null,
     });
     if (!parsed.success) {
       setFormError(parsed.error.issues[0]?.message ?? "Datos inválidos");
@@ -222,7 +217,6 @@ function NominaCurso({ cursoId, cursoNombre }: { cursoId: number; cursoNombre: s
       toast.success("Alumno en la nómina");
       setApellido("");
       setNombre("");
-      setDni("");
       await reload();
     } catch {
       /* Swal */
@@ -271,10 +265,6 @@ function NominaCurso({ cursoId, cursoNombre }: { cursoId: number; cursoNombre: s
       nominaHelper.columns([
         nominaHelper.accessor("apellido", { header: "Apellido" }),
         nominaHelper.accessor("nombre", { header: "Nombre" }),
-        nominaHelper.accessor("dni", {
-          header: "DNI",
-          cell: (ctx) => ctx.getValue() ?? "—",
-        }),
         nominaHelper.display({
           id: "acciones",
           header: "",
@@ -302,7 +292,7 @@ function NominaCurso({ cursoId, cursoNombre }: { cursoId: number; cursoNombre: s
         </Link>
       </div>
 
-      <form className="grid gap-3 sm:grid-cols-4" onSubmit={onAltaRapida}>
+      <form className="grid gap-3 sm:grid-cols-3" onSubmit={onAltaRapida}>
         <label className="space-y-1 sm:col-span-1">
           <span className="text-xs font-medium uppercase tracking-wide text-sky">Apellido</span>
           <input
@@ -321,15 +311,6 @@ function NominaCurso({ cursoId, cursoNombre }: { cursoId: number; cursoNombre: s
             value={nombre}
             onChange={(e) => setNombre(e.target.value)}
             placeholder="Juan"
-          />
-        </label>
-        <label className="space-y-1 sm:col-span-1">
-          <span className="text-xs font-medium uppercase tracking-wide text-sky">DNI</span>
-          <input
-            className={inputClass}
-            value={dni}
-            onChange={(e) => setDni(e.target.value)}
-            placeholder="Opcional"
           />
         </label>
         <div className="flex items-end">
@@ -356,7 +337,6 @@ function NominaCurso({ cursoId, cursoNombre }: { cursoId: number; cursoNombre: s
             {candidatos.map((a) => (
               <option key={a.id} value={a.id}>
                 {a.apellido}, {a.nombre}
-                {a.dni ? ` · ${a.dni}` : ""}
               </option>
             ))}
           </select>

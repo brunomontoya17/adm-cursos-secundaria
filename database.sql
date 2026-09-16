@@ -1,4 +1,4 @@
--- Adm Cursos — esquema de dominio (fuente de verdad) v1.2
+-- Adm Cursos — esquema de dominio (fuente de verdad) v1.3
 -- Dialecto: SQLite. Runtime: un archivo local vía Rust (PRAGMA foreign_keys = ON).
 -- Fechas: TEXT ISO (YYYY-MM-DD). Horas: TEXT HH:MM (24h).
 -- Notas y ponderaciones: TEXT decimal canónico (ej. '7.50'); aritmética en app con decimal.js, no REAL.
@@ -161,15 +161,13 @@ CREATE TABLE cursos (
 );
 
 -- Persona en los cursos del profesor. No es la matrícula de la escuela.
+-- Ficha mínima (v1.3): apellido + nombre. Sin DNI, contacto ni nacimiento
+-- (identificadores excesivos para el dictado; el id interno distingue homónimos).
 -- La pertenencia a un dictado es alumnos_cursos (mismo alumno en dos materias, o que repite).
 CREATE TABLE alumnos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nombre TEXT NOT NULL,
-    apellido TEXT NOT NULL,
-    dni TEXT UNIQUE,
-    email TEXT,
-    telefono TEXT,
-    fecha_nacimiento TEXT
+    apellido TEXT NOT NULL
 );
 
 CREATE TABLE alumnos_cursos (

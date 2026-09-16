@@ -3,7 +3,7 @@
 | | |
 |--|--|
 | **Producto** | Cuaderno de dictados de un docente (primaria y secundaria, PBA y/o CABA) |
-| **Fecha** | 2026-09-09 (schema dominio v1.2 — primaria + secundaria; no director) |
+| **Fecha** | 2026-09-16 (schema dominio v1.3 — ficha alumno mínima; no director) |
 | **Fuente de esquema** | [`database.sql`](../database.sql) — **fuente de verdad** (SQLite) |
 | **App** | `adm-cursos-secundaria/` (Tauri 2 + React 19 + Rust) |
 | **Persistencia runtime** | SQLite local (Rust). El archivo de esquema **es** el dialecto de runtime. |
@@ -62,7 +62,7 @@ alumnos 1──* observaciones
 | `escuelas` | Lugares donde **dicta**. `id_jurisdiccion` obligatorio; `nombre_corto`, dirección y contacto opcionales. Unique `(jurisdicción, nombre)`. |
 | `materias` | Lo que **este** docente dicta. Profesor de espacio: English, Plástica, … Maestro de grado: «Grado» o áreas. No es el diseño curricular de la escuela. |
 | `cursos` | Un dictado: escuela + turno + división + ciclo (implica nivel) + materia + año lectivo. `nombre` es etiqueta de UI. `orientacion` opcional (en primaria suele NULL). Unique en esa tupla. |
-| `alumnos` | Persona en *sus* cursos (`dni` unique nullable). No es la matrícula institucional. |
+| `alumnos` | Persona en *sus* cursos: `nombre` + `apellido`. El `id` distingue homónimos. No es la matrícula institucional. Sin DNI, email, teléfono ni fecha de nacimiento. |
 | `alumnos_cursos` | Inscripción alumno↔dictado (mismo alumno en dos materias del profesor). |
 | `horarios` | Grilla semanal del profesor (ISO 1–7 + hora inicio/fin + aula opcional). No es el horario institucional. |
 
@@ -99,6 +99,7 @@ Queda **fuera** todo lo que es de director / establecimiento / sistema oficial:
 - Boletines, libretas, planillas oficiales, SIEE / sistemas del ministerio
 - Contenidos curriculares oficiales (NAP, diseños PBA/CABA) más allá del `tema` libre
 - Adjuntos (enunciados PDF, fotos)
+- DNI, email, teléfono y fecha de nacimiento del alumno (ficha mínima v1.3)
 
 ## 5. Arquitectura objetivo
 
@@ -113,7 +114,7 @@ React (src/)  --invoke-->  Rust commands (src-tauri)
 - Feedback: react-toastify + sweetalert2. Iconos: `lucide-react`. Gráficos: `recharts`.
 - Estilos: `tailwindcss`. Fechas: Temporal. Catálogo: [`libraries-npm.md`](../libraries-npm.md).
 
-Estado 2026-09-10: schema dominio v1.2 (primaria + secundaria). Rust abre SQLite con `PRAGMA foreign_keys = ON`, aplica `database.sql` si la DB está vacía, y migra v1.1 → v1.2 (niveles + grados) si ya había tablas. IPC: `src/api.ts` (Zod) ↔ `src-tauri/src/domain.rs`; argumentos de comando en snake_case (`rename_all` en Rust). Pasos 0–10 del [roadmap](./roadmap.md) listos (inicio = resumen del día).
+Estado 2026-09-16: schema dominio **v1.3** (ficha de alumno = nombre + apellido). Rust abre SQLite con `PRAGMA foreign_keys = ON`, aplica `database.sql` si la DB está vacía, migra v1.1 → v1.2 (niveles + grados) y v1.2 → v1.3 (tira DNI/contacto/nacimiento conservando `id`). IPC: `src/api.ts` (Zod) ↔ `src-tauri/src/domain.rs`; argumentos de comando en snake_case (`rename_all` en Rust). Pasos 0–10 del [roadmap](./roadmap.md) listos; paso 11 de [privacidad](./roadmap-privacidad.md) listo.
 
 ## 6. Reglas para agentes
 

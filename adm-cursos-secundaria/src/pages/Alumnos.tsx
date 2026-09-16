@@ -11,14 +11,7 @@ import {
   type Curso,
 } from "../api";
 import { confirmAction } from "../feedback";
-import {
-  blankToNull,
-  btnDanger,
-  btnGhost,
-  btnLink,
-  btnPrimary,
-  inputClass,
-} from "../form";
+import { btnDanger, btnGhost, btnLink, btnPrimary, inputClass } from "../form";
 import { useAnioLectivo } from "../shell/AnioLectivoContext";
 import { DataTable, tableFeaturesBase } from "../ui/DataTable";
 import { ObservacionesAlumnoPanel } from "./Observaciones";
@@ -49,10 +42,6 @@ function Alumnos() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [nombre, setNombre] = useState("");
   const [apellido, setApellido] = useState("");
-  const [dni, setDni] = useState("");
-  const [email, setEmail] = useState("");
-  const [telefono, setTelefono] = useState("");
-  const [fechaNacimiento, setFechaNacimiento] = useState("");
   const [idCursoAlta, setIdCursoAlta] = useState("");
   const [idCursoInscribir, setIdCursoInscribir] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
@@ -97,10 +86,6 @@ function Alumnos() {
     setEditingId(null);
     setNombre("");
     setApellido("");
-    setDni("");
-    setEmail("");
-    setTelefono("");
-    setFechaNacimiento("");
     setIdCursoAlta("");
     setIdCursoInscribir("");
     setFormError(null);
@@ -110,10 +95,6 @@ function Alumnos() {
     setEditingId(row.id);
     setNombre(row.nombre);
     setApellido(row.apellido);
-    setDni(row.dni ?? "");
-    setEmail(row.email ?? "");
-    setTelefono(row.telefono ?? "");
-    setFechaNacimiento(row.fecha_nacimiento ?? "");
     setIdCursoAlta("");
     setIdCursoInscribir("");
     setFormError(null);
@@ -123,10 +104,6 @@ function Alumnos() {
     return {
       nombre: nombre.trim(),
       apellido: apellido.trim(),
-      dni: blankToNull(dni),
-      email: blankToNull(email),
-      telefono: blankToNull(telefono),
-      fecha_nacimiento: blankToNull(fechaNacimiento),
     };
   }
 
@@ -232,10 +209,6 @@ function Alumnos() {
       helper.columns([
         helper.accessor("apellido", { header: "Apellido" }),
         helper.accessor("nombre", { header: "Nombre" }),
-        helper.accessor("dni", {
-          header: "DNI",
-          cell: (ctx) => ctx.getValue() ?? "—",
-        }),
         helper.accessor("cursos", { header: "Cursos" }),
         helper.display({
           id: "acciones",
@@ -275,7 +248,7 @@ function Alumnos() {
       <div>
         <h2 className="font-serif text-2xl text-navy">Alumnos</h2>
         <p className="mt-1 text-sm text-sky">
-          Personas de tus dictados. El mismo chico puede estar en más de una materia.{" "}
+          Personas de tus dictados (apellido y nombre). El mismo chico puede estar en más de una materia.{" "}
           {activo
             ? `Inscripciones de ${activo.anio}.`
             : "Elegí un año lectivo en la cabecera para inscribir."}
@@ -295,7 +268,7 @@ function Alumnos() {
         <h3 className="text-sm font-medium text-navy">
           {editingId ? "Editar persona" : "Nueva persona"}
         </h3>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Apellido">
             <input
               required
@@ -312,37 +285,6 @@ function Alumnos() {
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
               placeholder="Juan"
-            />
-          </Field>
-          <Field label="DNI">
-            <input
-              className={inputClass}
-              value={dni}
-              onChange={(e) => setDni(e.target.value)}
-              placeholder="Opcional"
-            />
-          </Field>
-          <Field label="Email">
-            <input
-              className={inputClass}
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </Field>
-          <Field label="Teléfono">
-            <input
-              className={inputClass}
-              value={telefono}
-              onChange={(e) => setTelefono(e.target.value)}
-            />
-          </Field>
-          <Field label="Fecha de nacimiento">
-            <input
-              className={inputClass}
-              type="date"
-              value={fechaNacimiento}
-              onChange={(e) => setFechaNacimiento(e.target.value)}
             />
           </Field>
           {!editingId && (

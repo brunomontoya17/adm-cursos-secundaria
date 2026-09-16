@@ -239,10 +239,6 @@ export const alumnoSchema = z.object({
   id: idSchema,
   nombre: nombreSchema,
   apellido: nombreSchema,
-  dni: textoOpcionalSchema,
-  email: z.string().email().nullable(),
-  telefono: textoOpcionalSchema,
-  fecha_nacimiento: isoDateSchema.nullable(),
 });
 
 export const alumnoCursoSchema = z.object({
@@ -346,7 +342,6 @@ export const cursoWriteSchema = cursoSchema.omit({ id: true }).extend({
 export const alumnoWriteSchema = alumnoSchema.omit({ id: true }).extend({
   nombre: z.string().min(1, "El nombre es obligatorio."),
   apellido: z.string().min(1, "El apellido es obligatorio."),
-  email: z.string().email("El email no es válido.").nullable(),
 });
 export const alumnoCursoWriteSchema = alumnoCursoSchema.omit({ id: true });
 export const horarioWriteSchema = horarioSchema.omit({ id: true }).superRefine((h, ctx) => {

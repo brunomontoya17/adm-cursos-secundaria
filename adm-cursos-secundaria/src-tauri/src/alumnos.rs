@@ -5,17 +5,6 @@ use crate::domain::{Alumno, AlumnoCurso, AlumnoWrite};
 use rusqlite::{params, Connection};
 use tauri::State;
 
-fn opt_text(value: Option<String>) -> Option<String> {
-    value.and_then(|s| {
-        let t = s.trim();
-        if t.is_empty() {
-            None
-        } else {
-            Some(t.to_string())
-        }
-    })
-}
-
 fn require_nombre(nombre: &str, campo: &str) -> Result<String, String> {
     let t = nombre.trim();
     if t.is_empty() {
@@ -30,10 +19,6 @@ fn map_alumno(row: &rusqlite::Row<'_>) -> rusqlite::Result<Alumno> {
         id: row.get(0)?,
         nombre: row.get(1)?,
         apellido: row.get(2)?,
-        dni: row.get(3)?,
-        email: row.get(4)?,
-        telefono: row.get(5)?,
-        fecha_nacimiento: row.get(6)?,
     })
 }
 
@@ -45,8 +30,7 @@ fn map_inscripcion(row: &rusqlite::Row<'_>) -> rusqlite::Result<AlumnoCurso> {
     })
 }
 
-const ALUMNO_COLS: &str =
-    "id, nombre, apellido, dni, email, telefono, fecha_nacimiento";
+const ALUMNO_COLS: &str = "id, nombre, apellido";
 
 fn changes_or_missing(n: usize) -> rusqlite::Result<()> {
     if n == 0 {
@@ -76,7 +60,7 @@ fn list_alumnos_sql(conn: &Connection) -> rusqlite::Result<Vec<Alumno>> {
 
 fn list_alumnos_de_curso_sql(conn: &Connection, id_curso: i64) -> rusqlite::Result<Vec<Alumno>> {
     let mut stmt = conn.prepare(&format!(
-        "SELECT a.id, a.nombre, a.apellido, a.dni, a.email, a.telefono, a.fecha_nacimiento
+        "SELECT a.id, a.nombre, a.apellido
          FROM alumnos a
          JOIN alumnos_cursos ac ON ac.id_alumno = a.id
          WHERE ac.id_curso = ?1
@@ -113,44 +97,21 @@ fn alumno_from_write(alumno: AlumnoWrite) -> Result<AlumnoWrite, String> {
     Ok(AlumnoWrite {
         nombre: require_nombre(&alumno.nombre, "nombre")?,
         apellido: require_nombre(&alumno.apellido, "apellido")?,
-        dni: opt_text(alumno.dni),
-        email: opt_text(alumno.email),
-        telefono: opt_text(alumno.telefono),
-        fecha_nacimiento: opt_text(alumno.fecha_nacimiento),
     })
 }
 
 fn insert_alumno_sql(conn: &Connection, w: &AlumnoWrite) -> rusqlite::Result<Alumno> {
     conn.execute(
-        "INSERT INTO alumnos (nombre, apellido, dni, email, telefono, fecha_nacimiento)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-        params![
-            w.nombre,
-            w.apellido,
-            w.dni,
-            w.email,
-            w.telefono,
-            w.fecha_nacimiento,
-        ],
+        "INSERT INTO alumnos (nombre, apellido) VALUES (?1, ?2)",
+        params![w.nombre, w.apellido],
     )?;
     get_alumno_sql(conn, conn.last_insert_rowid())
 }
 
 fn update_alumno_sql(conn: &Connection, id: i64, w: &AlumnoWrite) -> rusqlite::Result<Alumno> {
     let n = conn.execute(
-        "UPDATE alumnos
-         SET nombre = ?1, apellido = ?2, dni = ?3, email = ?4,
-             telefono = ?5, fecha_nacimiento = ?6
-         WHERE id = ?7",
-        params![
-            w.nombre,
-            w.apellido,
-            w.dni,
-            w.email,
-            w.telefono,
-            w.fecha_nacimiento,
-            id,
-        ],
+        "UPDATE alumnos SET nombre = ?1, apellido = ?2 WHERE id = ?3",
+        params![w.nombre, w.apellido, id],
     )?;
     changes_or_missing(n)?;
     get_alumno_sql(conn, id)
@@ -271,14 +232,10 @@ mod tests {
         conn
     }
 
-    fn write(nombre: &str, apellido: &str, dni: Option<&str>) -> AlumnoWrite {
+    fn write(nombre: &str, apellido: &str) -> AlumnoWrite {
         AlumnoWrite {
             nombre: nombre.into(),
             apellido: apellido.into(),
-            dni: dni.map(str::to_string),
-            email: None,
-            telefono: None,
-            fecha_nacimiento: None,
         }
     }
 
@@ -320,8 +277,8 @@ mod tests {
     #[test]
     fn alta_y_listado_por_apellido() {
         let conn = memory();
-        insert_alumno_sql(&conn, &write("Ana", "Zamora", None)).unwrap();
-        insert_alumno_sql(&conn, &write("Juan", "Pérez", Some("30111222"))).unwrap();
+        insert_alumno_sql(&conn, &write("Ana", "Zamora")).unwrap();
+        insert_alumno_sql(&conn, &write("Juan", "Pérez")).unwrap();
         let rows = list_alumnos_sql(&conn).unwrap();
         assert_eq!(rows.len(), 2);
         assert_eq!(rows[0].apellido, "Pérez");
@@ -329,18 +286,20 @@ mod tests {
     }
 
     #[test]
-    fn dni_unique() {
+    fn homonimos_permitidos() {
         let conn = memory();
-        insert_alumno_sql(&conn, &write("Ana", "Zamora", Some("30111222"))).unwrap();
-        let err = insert_alumno_sql(&conn, &write("Otra", "Persona", Some("30111222"))).unwrap_err();
-        assert_eq!(map_sql_error(err), "Ya existe un alumno con ese DNI.");
+        insert_alumno_sql(&conn, &write("Juan", "Pérez")).unwrap();
+        insert_alumno_sql(&conn, &write("Juan", "Pérez")).unwrap();
+        let rows = list_alumnos_sql(&conn).unwrap();
+        assert_eq!(rows.len(), 2);
+        assert_ne!(rows[0].id, rows[1].id);
     }
 
     #[test]
     fn mismo_alumno_en_dos_dictados() {
         let conn = memory();
         let (c1, c2) = seed_dos_cursos(&conn);
-        let a = insert_alumno_sql(&conn, &write("Juan", "Pérez", None)).unwrap();
+        let a = insert_alumno_sql(&conn, &write("Juan", "Pérez")).unwrap();
         inscribir_sql(&conn, a.id, c1).unwrap();
         inscribir_sql(&conn, a.id, c2).unwrap();
         assert_eq!(list_alumnos_de_curso_sql(&conn, c1).unwrap().len(), 1);
@@ -353,7 +312,7 @@ mod tests {
     fn inscripcion_unica() {
         let conn = memory();
         let (c1, _) = seed_dos_cursos(&conn);
-        let a = insert_alumno_sql(&conn, &write("Juan", "Pérez", None)).unwrap();
+        let a = insert_alumno_sql(&conn, &write("Juan", "Pérez")).unwrap();
         inscribir_sql(&conn, a.id, c1).unwrap();
         let err = inscribir_sql(&conn, a.id, c1).unwrap_err();
         assert_eq!(
@@ -366,7 +325,7 @@ mod tests {
     fn baja_no_borra_persona() {
         let mut conn = memory();
         let (c1, _) = seed_dos_cursos(&conn);
-        let a = insert_alumno_sql(&conn, &write("Juan", "Pérez", None)).unwrap();
+        let a = insert_alumno_sql(&conn, &write("Juan", "Pérez")).unwrap();
         inscribir_sql(&conn, a.id, c1).unwrap();
         desinscribir_sql(&mut conn, a.id, c1).unwrap();
         assert!(list_alumnos_de_curso_sql(&conn, c1).unwrap().is_empty());
@@ -377,7 +336,7 @@ mod tests {
     fn baja_borra_notas_de_ese_dictado() {
         let mut conn = memory();
         let (c1, c2) = seed_dos_cursos(&conn);
-        let a = insert_alumno_sql(&conn, &write("Juan", "Pérez", None)).unwrap();
+        let a = insert_alumno_sql(&conn, &write("Juan", "Pérez")).unwrap();
         inscribir_sql(&conn, a.id, c1).unwrap();
         inscribir_sql(&conn, a.id, c2).unwrap();
         conn.execute(
@@ -424,23 +383,17 @@ mod tests {
     }
 
     #[test]
-    fn campos_opcionales_vacios_quedan_null() {
+    fn recorta_espacios_de_nombre_y_apellido() {
         let conn = memory();
         let w = alumno_from_write(AlumnoWrite {
             nombre: "  Ana  ".into(),
             apellido: "  Gómez  ".into(),
-            dni: Some("  ".into()),
-            email: Some("".into()),
-            telefono: None,
-            fecha_nacimiento: Some("  ".into()),
         })
         .unwrap();
         assert_eq!(w.nombre, "Ana");
         assert_eq!(w.apellido, "Gómez");
-        assert_eq!(w.dni, None);
         let saved = insert_alumno_sql(&conn, &w).unwrap();
-        assert_eq!(saved.dni, None);
-        assert_eq!(saved.email, None);
-        assert_eq!(saved.fecha_nacimiento, None);
+        assert_eq!(saved.nombre, "Ana");
+        assert_eq!(saved.apellido, "Gómez");
     }
 }

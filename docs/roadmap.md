@@ -5,11 +5,13 @@
 | **Producto** | Cuaderno de dictados de un docente (primaria y secundaria, PBA y/o CABA) |
 | **Fuente de verdad** | [`database.sql`](../database.sql) |
 | **Mapa de dominio** | [`domain-map.md`](./domain-map.md) |
-| **Fecha** | 2026-09-09 |
+| **Fecha** | 2026-09-09 (funcional 0–10). Tira de privacidad: 2026-09-16 |
 
 Cada paso es una **funcionalidad usable** (pantalla + comandos Rust + persistencia). No se salta el orden: lo de abajo cuelga de `cursos` y `alumnos_cursos`.
 
 Fuera de este roadmap (a propósito): login, multi-profesor, matrícula institucional, boletines, SIEE, adjuntos.
+
+**Después de 0–10:** minimización y resguardo de datos de alumnos (Ley 25.326, camino B). Pasos **11–14** en [`roadmap-privacidad.md`](./roadmap-privacidad.md). **11 hecho** (schema v1.3). No mezclar esos PRs con features nuevas de dictado.
 
 ---
 
@@ -28,7 +30,7 @@ Fuera de este roadmap (a propósito): login, multi-profesor, matrícula instituc
 - **0 Shell.** Tauri 1280×720, paleta y logo, menú izquierdo, HashRouter, SQLite con `PRAGMA foreign_keys=ON`, `db_status`, contrato Zod/serde. Schema **v1.2**: catálogo `niveles`, ciclos por nivel (grado ≠ año), migración desde DBs v1.1.
 - **1 Escuelas, materias y año lectivo.** `/escuelas` (CRUD escuelas + panel materias). Año activo en cabecera: ver, crear el siguiente, activar uno solo.
 - **2 Cursos.** `/cursos` listado del año activo (filtro por nivel), alta con nivel → ciclo, etiqueta sugerida, edición y baja. Ficha `/cursos/:id` con resumen.
-- **3 Alumnos.** `/alumnos` persona + inscripción a dictados del año activo. Nómina en la ficha del curso (alta rápida o existente).
+- **3 Alumnos.** `/alumnos` persona (apellido + nombre) + inscripción a dictados del año activo. Nómina en la ficha del curso (alta rápida o existente). Ficha mínima desde schema v1.3 (paso 11).
 - **4 Horarios.** `/horarios` grilla ISO 1–7 del año activo; bloques también en la ficha del curso.
 - **5 Evaluaciones.** `/evaluaciones` del año activo (título, tipo, fecha, tema, ponderación TEXT, recuperatorio con origen). También en la ficha del curso.
 - **6 Notas.** `/notas` planilla alumno × evaluación (1–10 o ausente, promedio ponderado en pantalla). También en la ficha del curso.
@@ -76,7 +78,7 @@ Fuera de este roadmap (a propósito): login, multi-profesor, matrícula instituc
 
 **Pantalla** `/alumnos`
 
-- Listado (apellido, nombre, DNI opcional, cursos en los que está).
+- Listado (apellido, nombre, cursos en los que está).
 - Alta/edición de persona.
 - Inscribir / dar de baja de un curso del año activo (sin borrar a la persona).
 - Desde la ficha de un **curso**: “alumnos de este dictado” (alta rápida + elegir existente).

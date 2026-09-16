@@ -100,9 +100,6 @@ pub fn map_sql_error(err: rusqlite::Error) -> String {
     if msg.contains("ux_anios_lectivos_activo") || msg.contains("anios_lectivos.activo") {
         return "Solo puede haber un año lectivo activo.".into();
     }
-    if msg.contains("alumnos.dni") {
-        return "Ya existe un alumno con ese DNI.".into();
-    }
     if msg.contains("alumnos_cursos.id_alumno") && msg.contains("alumnos_cursos.id_curso") {
         return "Ese alumno ya está inscripto en este curso.".into();
     }
@@ -151,6 +148,7 @@ fn ensure_schema(conn: &Connection) -> rusqlite::Result<()> {
     heal_ciclos_rename_leftovers(conn)?;
     migrate_niveles_y_ciclos(conn)?;
     repair_cursos_fk_ciclos_old(conn)?;
+    migrate_alumnos_ficha_minima(conn)?;
     Ok(())
 }
 
@@ -379,6 +377,46 @@ fn rebuild_cursos_fk_a_ciclos(conn: &Connection) -> rusqlite::Result<()> {
         ",
     )?;
     reset_sqlite_sequence(conn, "cursos")?;
+    Ok(())
+}
+
+/// v1.2 → v1.3: ficha de alumno = nombre + apellido. Tira DNI, email, teléfono y nacimiento.
+/// Conserva `id` para no huérfanas notas, asistencia ni observaciones.
+fn migrate_alumnos_ficha_minima(conn: &Connection) -> rusqlite::Result<()> {
+    if !table_exists(conn, "alumnos")? {
+        return Ok(());
+    }
+    const EXTRA: [&str; 4] = ["dni", "email", "telefono", "fecha_nacimiento"];
+    let mut ancha = false;
+    for col in EXTRA {
+        if column_exists(conn, "alumnos", col)? {
+            ancha = true;
+            break;
+        }
+    }
+    if !ancha {
+        return Ok(());
+    }
+    rebuild_alumnos_ficha_minima(conn)
+}
+
+fn rebuild_alumnos_ficha_minima(conn: &Connection) -> rusqlite::Result<()> {
+    let _guard = SchemaRebuildGuard::enter(conn)?;
+    conn.execute_batch(
+        "
+        CREATE TABLE alumnos_new (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT NOT NULL,
+            apellido TEXT NOT NULL
+        );
+        INSERT INTO alumnos_new (id, nombre, apellido)
+        SELECT id, nombre, apellido FROM alumnos;
+        DROP TABLE alumnos;
+        ALTER TABLE alumnos_new RENAME TO alumnos;
+        CREATE INDEX IF NOT EXISTS ix_alumnos_apellido_nombre ON alumnos (apellido, nombre);
+        ",
+    )?;
+    reset_sqlite_sequence(conn, "alumnos")?;
     Ok(())
 }
 
@@ -746,5 +784,65 @@ mod tests {
             .query_row("SELECT COUNT(*) FROM materias", [], |row| row.get(0))
             .unwrap();
         assert_eq!(n, 1);
+    }
+
+    #[test]
+    fn migrate_alumnos_v12_tira_dni_y_conserva_id() {
+        let conn = Connection::open_in_memory().unwrap();
+        apply_pragmas(&conn).unwrap();
+        conn.execute_batch(
+            "
+            CREATE TABLE alumnos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre TEXT NOT NULL,
+                apellido TEXT NOT NULL,
+                dni TEXT UNIQUE,
+                email TEXT,
+                telefono TEXT,
+                fecha_nacimiento TEXT
+            );
+            INSERT INTO alumnos (id, nombre, apellido, dni, email, telefono, fecha_nacimiento)
+            VALUES (7, 'Lucía', 'García', '30111222', 'a@b.com', '111', '2012-03-01');
+            CREATE TABLE notas (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id_alumno INTEGER NOT NULL,
+                valor TEXT,
+                FOREIGN KEY (id_alumno) REFERENCES alumnos (id) ON DELETE CASCADE
+            );
+            INSERT INTO notas (id_alumno, valor) VALUES (7, '8');
+            ",
+        )
+        .unwrap();
+        prepare_connection(&conn).unwrap();
+        assert!(!column_exists(&conn, "alumnos", "dni").unwrap());
+        assert!(!column_exists(&conn, "alumnos", "email").unwrap());
+        assert!(!column_exists(&conn, "alumnos", "telefono").unwrap());
+        assert!(!column_exists(&conn, "alumnos", "fecha_nacimiento").unwrap());
+        let (id, nombre, apellido): (i64, String, String) = conn
+            .query_row(
+                "SELECT id, nombre, apellido FROM alumnos WHERE id = 7",
+                [],
+                |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
+            )
+            .unwrap();
+        assert_eq!(id, 7);
+        assert_eq!(nombre, "Lucía");
+        assert_eq!(apellido, "García");
+        let n_notas: i64 = conn
+            .query_row("SELECT COUNT(*) FROM notas WHERE id_alumno = 7", [], |row| {
+                row.get(0)
+            })
+            .unwrap();
+        assert_eq!(n_notas, 1);
+        conn.execute(
+            "INSERT INTO alumnos (nombre, apellido) VALUES ('Lucía', 'García')",
+            [],
+        )
+        .expect("homónimos permitidos tras sacar unique de DNI");
+        prepare_connection(&conn).unwrap();
+        let n: i64 = conn
+            .query_row("SELECT COUNT(*) FROM alumnos", [], |row| row.get(0))
+            .unwrap();
+        assert_eq!(n, 2);
     }
 }
