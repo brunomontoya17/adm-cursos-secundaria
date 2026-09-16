@@ -29,6 +29,7 @@ import {
   hoyIso,
   promedioPonderado,
 } from "../form";
+import { useAlcance } from "../shell/AlcanceContext";
 import { useAnioLectivo } from "../shell/AnioLectivoContext";
 
 const atajoInicio =
@@ -55,6 +56,7 @@ type PromedioCurso = {
 function Inicio() {
   const [dbStatus, setDbStatus] = useState<DbStatus | null>(null);
   const { activo } = useAnioLectivo();
+  const { abrirReleer } = useAlcance();
   const hoy = hoyIso();
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [horarios, setHorarios] = useState<Horario[]>([]);
@@ -409,11 +411,16 @@ function Inicio() {
           Observaciones
         </Link>
       </div>
-      {dbStatus && (
-        <p className="text-xs text-sky">
-          Listo · {dbStatus.tables} tablas · FK {dbStatus.foreign_keys}
-        </p>
-      )}
+      <div className="flex flex-wrap items-center gap-3 text-xs text-sky">
+        {dbStatus ? (
+          <p>
+            Listo · {dbStatus.tables} tablas · FK {dbStatus.foreign_keys}
+          </p>
+        ) : null}
+        <button type="button" className={`${btnLink} text-xs`} onClick={abrirReleer}>
+          Alcance de este cuaderno
+        </button>
+      </div>
     </section>
   );
 }

@@ -9,6 +9,7 @@ mod horarios;
 mod maestras;
 mod notas;
 mod observaciones;
+mod privacidad;
 
 use tauri::Manager;
 
@@ -42,6 +43,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             greet,
             db_status,
+            privacidad::aviso_privacidad_estado,
+            privacidad::aceptar_aviso_privacidad,
             maestras::list_niveles,
             maestras::list_ciclos,
             maestras::list_jurisdicciones,

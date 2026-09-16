@@ -14,8 +14,10 @@ import {
 } from "../api";
 import { confirmAction } from "../feedback";
 import { btnDanger, btnGhost, btnLink, btnPrimary, formatFecha, hoyIso, inputClass } from "../form";
+import { LIMITE_TEXTO_LIBRE, placeholderObservacion } from "../privacidad";
 import { useAnioLectivo } from "../shell/AnioLectivoContext";
 import { DataTable, tableFeaturesBase } from "../ui/DataTable";
+import { LimiteTextoLibre } from "../ui/AvisoAlcance";
 
 const helper = createColumnHelper<typeof tableFeaturesBase, ObsRow>();
 const EMPTY: ObsRow[] = [];
@@ -94,11 +96,13 @@ function ObservacionForm({
   onSubmit: (event: FormEvent) => void;
   onCancel: () => void;
 }) {
+  const tipoCodigo = tipos.find((t) => String(t.id) === form.idTipo)?.codigo;
   return (
     <form className="grid gap-3 border border-navy/15 bg-cream/40 p-4" onSubmit={onSubmit}>
       <h3 className="text-sm font-medium text-navy">
         {form.editingId ? "Editar observación" : "Nueva observación"}
       </h3>
+      <LimiteTextoLibre>{LIMITE_TEXTO_LIBRE}</LimiteTextoLibre>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {!cursoFijo && (
           <Field label="Curso">
@@ -166,7 +170,7 @@ function ObservacionForm({
           className={`${inputClass} min-h-[4.5rem]`}
           value={form.texto}
           onChange={(e) => setForm({ ...form, texto: e.target.value })}
-          placeholder="Seguimiento — habló con la familia…"
+          placeholder={placeholderObservacion(tipoCodigo, form.fecha)}
         />
       </Field>
       {formError && <p className="text-sm text-crimson">{formError}</p>}
@@ -798,7 +802,7 @@ function Observaciones() {
         <h2 className="font-serif text-2xl text-navy">Observaciones</h2>
         <p className="mt-1 text-sm text-sky">
           {activo
-            ? `Anotaciones de ${activo.anio} sobre un alumno en ese dictado (académica, conducta, seguimiento, reunión con familia).`
+            ? `Anotaciones de ${activo.anio} sobre un alumno en ese dictado (académica, conducta, seguimiento, reunión con familia). ${LIMITE_TEXTO_LIBRE}`
             : "Elegí un año lectivo en la cabecera."}
         </p>
       </div>

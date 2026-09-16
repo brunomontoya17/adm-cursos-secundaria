@@ -36,7 +36,7 @@ Esto no es asesoramiento legal. Es el recorte de producto que hace defendible el
 | Paso | Qué se gana | Depende de |
 |------|-------------|------------|
 | **11** Minimizar ficha de alumno **(hecho)** | Deja de pedirse y persistirse DNI, email, teléfono, fecha de nacimiento | Schema v1.2 |
-| **12** Aviso de alcance | El docente ve para qué es el cuaderno y qué no anotar | 11 (textos sobre la ficha ya recortada) |
+| **12** Aviso de alcance **(hecho)** | El docente ve para qué es el cuaderno y qué no anotar | 11 |
 | **13** Baja y caducidad | Borrar persona del todo; limpiar un año lectivo inactivo | 11 |
 | **14** Candado y cifrado | Nadie abre el archivo sin clave; el `.sqlite` no queda en claro | 11–13 (cifrar *después* de achicar el contenido) |
 
@@ -83,7 +83,7 @@ En `db.rs`, junto a `migrate_niveles_y_ciclos`:
 
 ---
 
-## Paso 12 — Aviso de alcance (primer uso y textos libres)
+## Paso 12 — Aviso de alcance (primer uso y textos libres) **(hecho)**
 
 **Para qué.** Transparencia de finalidad (art. 4.3, 6 y 11) y Ley 26.061 art. 22: no difundir datos de NNyA. No es consentimiento parental. Es que el docente sepa qué es este archivo.
 

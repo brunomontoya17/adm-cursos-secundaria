@@ -11,6 +11,7 @@ import {
   Users,
 } from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
+import { useAlcance } from "./AlcanceContext";
 import AnioLectivoControl from "./AnioLectivoControl";
 
 const NAV = [
@@ -27,6 +28,7 @@ const NAV = [
 ] as const;
 
 function AppShell() {
+  const { abrirReleer } = useAlcance();
   return (
     <div className="flex h-screen min-h-0 flex-col bg-paper text-navy">
       <header className="flex h-14 shrink-0 items-center gap-3 border-b border-navy/15 bg-navy px-4 text-cream">
@@ -68,6 +70,13 @@ function AppShell() {
               </NavLink>
             );
           })}
+          <button
+            type="button"
+            className="mt-auto px-4 py-2 text-left text-xs text-paper/70 hover:bg-navy-mid hover:text-paper"
+            onClick={abrirReleer}
+          >
+            Alcance de este cuaderno
+          </button>
         </nav>
 
         <main className="min-h-0 min-w-0 flex-1 overflow-auto bg-paper">

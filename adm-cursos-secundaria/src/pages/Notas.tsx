@@ -20,7 +20,9 @@ import {
   normalizeDecimalText,
   promedioPonderado,
 } from "../form";
+import { LIMITE_COMENTARIO_NOTA } from "../privacidad";
 import { useAnioLectivo } from "../shell/AnioLectivoContext";
+import { LimiteTextoLibre } from "../ui/AvisoAlcance";
 import Decimal from "decimal.js";
 
 function etiquetaAlumno(a: Alumno): string {
@@ -158,6 +160,7 @@ function Planilla({
 
   return (
     <div className="space-y-3">
+      <LimiteTextoLibre>{LIMITE_COMENTARIO_NOTA}</LimiteTextoLibre>
       <p className="text-sm text-sky">
         Promedio del curso (ponderado, sin ausentes ni vacíos):{" "}
         <span className="font-medium text-navy">{formatDecimal(promedioCurso)}</span>
@@ -331,11 +334,12 @@ function CeldaNota({
       <input
         type="text"
         className={`${inputClass} px-2 py-1 text-xs`}
-        placeholder="Comentario"
+        placeholder="Sin diagnóstico ni certificado"
+        title={LIMITE_COMENTARIO_NOTA}
         value={comentario}
         onChange={(e) => setComentario(e.target.value)}
         onBlur={() => void commit()}
-        aria-label="Comentario"
+        aria-label="Comentario de la nota"
       />
       {localError && <p className="text-xs text-crimson">{localError}</p>}
     </div>
@@ -399,6 +403,7 @@ function Notas() {
           Planilla del dictado: filas = alumnos inscriptos, columnas = evaluaciones. Escala 1–10
           o ausente. El promedio ponderado se calcula acá; no se guarda.
         </p>
+        <LimiteTextoLibre>{LIMITE_COMENTARIO_NOTA}</LimiteTextoLibre>
       </div>
 
       {!activo ? (

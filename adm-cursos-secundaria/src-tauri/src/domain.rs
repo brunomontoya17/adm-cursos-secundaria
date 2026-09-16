@@ -26,6 +26,12 @@ pub struct DbStatus {
     pub tables: i64,
 }
 
+/// `{app_data_dir}/privacidad.json` — no es tabla SQL (paso 12).
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct AvisoPrivacidad {
+    pub aceptado: Flag01,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Turno {
     pub id: i64,

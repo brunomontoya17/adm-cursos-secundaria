@@ -329,6 +329,10 @@ export const dbStatusSchema = z.object({
   tables: z.number().int().nonnegative(),
 });
 
+export const avisoPrivacidadSchema = z.object({
+  aceptado: flag01Schema,
+});
+
 export const escuelaWriteSchema = escuelaSchema.omit({ id: true }).extend({
   nombre: z.string().min(1, "El nombre es obligatorio."),
   email: z.string().email("El email no es válido.").nullable(),
@@ -417,6 +421,7 @@ export type Nota = z.infer<typeof notaSchema>;
 export type Observacion = z.infer<typeof observacionSchema>;
 export type Asistencia = z.infer<typeof asistenciaSchema>;
 export type DbStatus = z.infer<typeof dbStatusSchema>;
+export type AvisoPrivacidad = z.infer<typeof avisoPrivacidadSchema>;
 export type EscuelaWrite = z.infer<typeof escuelaWriteSchema>;
 export type MateriaWrite = z.infer<typeof materiaWriteSchema>;
 export type CursoWrite = z.infer<typeof cursoWriteSchema>;
@@ -435,6 +440,10 @@ const voidResultSchema = z.null();
 export const api = {
   greet: (name: string) => invokeChecked("greet", z.string(), { name }),
   dbStatus: () => invokeChecked("db_status", dbStatusSchema),
+  avisoPrivacidadEstado: () =>
+    invokeChecked("aviso_privacidad_estado", avisoPrivacidadSchema),
+  aceptarAvisoPrivacidad: () =>
+    invokeChecked("aceptar_aviso_privacidad", avisoPrivacidadSchema),
   listJurisdicciones: () =>
     invokeChecked("list_jurisdicciones", z.array(jurisdiccionSchema)),
   listTurnos: () => invokeChecked("list_turnos", z.array(turnoSchema)),

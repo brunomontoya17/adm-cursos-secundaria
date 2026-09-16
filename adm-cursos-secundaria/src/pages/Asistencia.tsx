@@ -10,6 +10,7 @@ import {
   type EstadoAsistencia,
 } from "../api";
 import { btnGhost, btnLink, btnPrimary, formatFecha, hoyIso, inputClass } from "../form";
+import { LIMITE_ASISTENCIA_JUSTIFICADO } from "../privacidad";
 import { useAnioLectivo } from "../shell/AnioLectivoContext";
 
 function etiquetaAlumno(a: Alumno): string {
@@ -265,7 +266,7 @@ function Asistencia() {
         <h2 className="font-serif text-2xl text-navy">Asistencia</h2>
         <p className="mt-1 text-sm text-sky">
           Pase de lista de esa hora de clase, no el libro del colegio. Elegí curso y fecha
-          (hoy por defecto), marcá todos presentes y corregí.
+          (hoy por defecto), marcá todos presentes y corregí. {LIMITE_ASISTENCIA_JUSTIFICADO}
         </p>
       </div>
 
