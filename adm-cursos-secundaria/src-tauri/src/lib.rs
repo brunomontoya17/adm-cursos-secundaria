@@ -1,5 +1,6 @@
 mod alumnos;
 mod asistencias;
+mod candado;
 mod cursos;
 mod db;
 pub mod domain;
@@ -28,14 +29,13 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
-            match db::Db::open_for_app(app) {
+            match db::Db::for_app(app) {
                 Ok(opened) => {
                     app.manage(opened);
                 }
                 Err(err) => {
-                    let message = err.to_string();
-                    eprintln!("sqlite: {message}");
-                    app.manage(db::Db::unavailable(message));
+                    eprintln!("cuaderno: {err}");
+                    app.manage(db::Db::locked_at(std::path::PathBuf::new()));
                 }
             }
             Ok(())
@@ -43,6 +43,9 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             greet,
             db_status,
+            db::candado_estado,
+            db::crear_clave,
+            db::desbloquear,
             privacidad::aviso_privacidad_estado,
             privacidad::aceptar_aviso_privacidad,
             maestras::list_niveles,

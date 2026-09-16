@@ -39,6 +39,7 @@ export async function invokeChecked<T>(
   command: string,
   schema: z.ZodType<T>,
   args?: Record<string, unknown>,
+  opts?: { silent?: boolean },
 ): Promise<T> {
   try {
     const raw = await invoke(command, args);
@@ -46,7 +47,7 @@ export async function invokeChecked<T>(
   } catch (err) {
     const wrapped = err instanceof ApiError ? err : new ApiError(command, err);
     const fromZod = wrapped.cause instanceof z.ZodError;
-    if (!fromZod && isTauriRuntime()) {
+    if (!fromZod && isTauriRuntime() && !opts?.silent) {
       showDbError(rustDbMessage(wrapped));
     }
     throw wrapped;
@@ -333,6 +334,12 @@ export const avisoPrivacidadSchema = z.object({
   aceptado: flag01Schema,
 });
 
+export const candadoEstadoSchema = z.object({
+  fase: z.enum(["crear", "desbloquear", "abierto"]),
+  intentos_restantes: z.number().int().nonnegative(),
+  migra: flag01Schema,
+});
+
 export const escuelaWriteSchema = escuelaSchema.omit({ id: true }).extend({
   nombre: z.string().min(1, "El nombre es obligatorio."),
   email: z.string().email("El email no es válido.").nullable(),
@@ -422,6 +429,7 @@ export type Observacion = z.infer<typeof observacionSchema>;
 export type Asistencia = z.infer<typeof asistenciaSchema>;
 export type DbStatus = z.infer<typeof dbStatusSchema>;
 export type AvisoPrivacidad = z.infer<typeof avisoPrivacidadSchema>;
+export type CandadoEstado = z.infer<typeof candadoEstadoSchema>;
 export type EscuelaWrite = z.infer<typeof escuelaWriteSchema>;
 export type MateriaWrite = z.infer<typeof materiaWriteSchema>;
 export type CursoWrite = z.infer<typeof cursoWriteSchema>;
@@ -444,6 +452,11 @@ export const api = {
     invokeChecked("aviso_privacidad_estado", avisoPrivacidadSchema),
   aceptarAvisoPrivacidad: () =>
     invokeChecked("aceptar_aviso_privacidad", avisoPrivacidadSchema),
+  candadoEstado: () => invokeChecked("candado_estado", candadoEstadoSchema, undefined, { silent: true }),
+  crearClave: (clave: string, repetir: string) =>
+    invokeChecked("crear_clave", candadoEstadoSchema, { clave, repetir }, { silent: true }),
+  desbloquear: (clave: string) =>
+    invokeChecked("desbloquear", candadoEstadoSchema, { clave }, { silent: true }),
   listJurisdicciones: () =>
     invokeChecked("list_jurisdicciones", z.array(jurisdiccionSchema)),
   listTurnos: () => invokeChecked("list_turnos", z.array(turnoSchema)),

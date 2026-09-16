@@ -38,7 +38,7 @@ Esto no es asesoramiento legal. Es el recorte de producto que hace defendible el
 | **11** Minimizar ficha de alumno **(hecho)** | Deja de pedirse y persistirse DNI, email, teléfono, fecha de nacimiento | Schema v1.2 |
 | **12** Aviso de alcance **(hecho)** | El docente ve para qué es el cuaderno y qué no anotar | 11 |
 | **13** Baja y caducidad **(hecho)** | Borrar persona del todo; limpiar un año lectivo inactivo | 11 |
-| **14** Candado y cifrado | Nadie abre el archivo sin clave; el `.sqlite` no queda en claro | 11–13 (cifrar *después* de achicar el contenido) |
+| **14** Candado y cifrado **(hecho)** | Nadie abre el archivo sin clave; el `.sqlite` no queda en claro | 11–13 |
 
 Listo cuando: un docente carga “García, Lucía” **sin DNI**, pasa lista y carga notas; al primer uso leyó que es su cuaderno y no se comparte; puede borrar a Lucía o limpiar 2025; al reabrir pide clave.
 
@@ -146,7 +146,7 @@ UI: junto al control de año lectivo (cabecera) o en Escuelas/año — acción s
 
 ---
 
-## Paso 14 — Candado y cifrado
+## Paso 14 — Candado y cifrado **(hecho)**
 
 **Para qué.** Art. 9: el `.sqlite` en el perfil de Windows no puede leerse copiando el archivo. El candado no es login ni multi-usuario: es **una clave del docente** que abre *su* cuaderno.
 
@@ -157,14 +157,12 @@ UI: junto al control de año lectivo (cabecera) o en Escuelas/año — acción s
 3. Clave olvidada: no hay recuperación. Texto claro al crearla: “si la olvidás, no se puede abrir este cuaderno”. (Un reset sería borrar la DB: no lo ofrecemos en UI en este paso.)
 4. Backup: **no** en este paso. Si más adelante hay export, tiene que salir cifrado o ser una copia que sigue pidiendo la misma clave. Nada de CSV de alumnos por mail.
 
-**Técnica (objetivo)**
+**Técnica (hecha)**
 
-- Cifrar el archivo SQLite (SQLCipher o el binding que `rusqlite` permita **bundled** en Windows).
-- La clave no se loguea ni se manda al frontend más que el input de desbloqueo.
-- WAL + FK se mantienen **después** de abrir con la clave.
-- Migración de DBs v1.3 en claro: una sola pasada (crear DB cifrada, copiar, reemplazar). Si falla, no dejar dos archivos divergentes.
-
-**Riesgo de este paso:** SQLCipher en Windows (OpenSSL vendored, `rusqlite` features). Si el bundle no cierra en un tiempo acotado, **fallback documentado en el mismo PR**: candado de arranque + cifrado del archivo con DPAPI/AES y clave derivada (Argon2), abriendo SQLite solo en memoria o sobre un archivo temporal que no sobreviva al cierre. El fallback no es “dejar el sqlite en claro con un PIN de mentira”.
+- SQLCipher bundled en Windows no cerró (OpenSSL/Perl/NASM). Fallback: **AES-256-GCM** + **Argon2id**, magia `TMSTDB01`. El archivo `{app_data_dir}/adm-cursos.sqlite` **no** es un SQLite legible.
+- La conexión vive **en memoria**. Tras cada operación se vuelca y se reescribe el blob cifrado. La clave no se loguea; solo entra por el input.
+- FK se aplican al abrir en memoria. WAL del archivo en claro se borra al migrar.
+- DBs v1.3 en claro: una pasada al crear la clave (cifrar y reemplazar). Tres fallos de desbloqueo por arranque.
 
 **Listo cuando** `adm-cursos.sqlite` no se lee con un visor SQLite sin clave; un arranque pide la clave; una DB anterior en claro se cifra una vez y después ya no existe la copia abierta.
 

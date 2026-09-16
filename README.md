@@ -27,6 +27,6 @@ Tras un cambio en Rust hay que **reiniciar** `npm run tauri dev`; el HMR del fro
 
 ## Estado
 
-Pasos **0–10** del [roadmap](docs/roadmap.md): shell, escuelas/materias/año lectivo, cursos, alumnos, horarios, evaluaciones, notas, asistencia, calendario (eventos), observaciones e inicio (resumen del día). Schema `database.sql` **v1.3** (alumno = nombre + apellido). Pasos 11–13 de [privacidad](docs/roadmap-privacidad.md) hechos. Icono de la app: sello del logo (no el default de Tauri).
+Pasos **0–10** del [roadmap](docs/roadmap.md): shell, escuelas/materias/año lectivo, cursos, alumnos, horarios, evaluaciones, notas, asistencia, calendario (eventos), observaciones e inicio (resumen del día). Schema `database.sql` **v1.3** (alumno = nombre + apellido). Pasos 11–14 de [privacidad](docs/roadmap-privacidad.md) hechos (ficha mínima, aviso, caducidad, candado). Icono de la app: sello del logo (no el default de Tauri).
 
 Repositorio: [brunomontoya17/adm-cursos-secundaria](https://github.com/brunomontoya17/adm-cursos-secundaria).

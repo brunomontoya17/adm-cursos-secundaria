@@ -32,6 +32,14 @@ pub struct AvisoPrivacidad {
     pub aceptado: Flag01,
 }
 
+/// `fase`: crear | desbloquear | abierto. `migra` = 1 si hay SQLite en claro a cifrar.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct CandadoEstado {
+    pub fase: String,
+    pub intentos_restantes: i64,
+    pub migra: Flag01,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Turno {
     pub id: i64,

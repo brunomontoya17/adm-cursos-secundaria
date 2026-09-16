@@ -1,56 +1,186 @@
 //! SQLite local. `PRAGMA foreign_keys = ON` en cada conexión (SQLite no lo persiste).
 //! El DDL sale de `database.sql` (raíz del repo); no se reaplican los DROP si ya hay tablas.
+//! Paso 14: el archivo en disco está cifrado (AES-GCM); la conexión es in-memory.
 
-use crate::domain::DbStatus;
+use crate::candado::{
+    borrar_sidecars_sqlite, cifrar, descifrar, derivar_clave, nuevo_salt, recuperar_si_quedo_new,
+    tipo_archivo, validar_clave, escribir_atomico, TipoArchivo,
+};
+use crate::domain::{CandadoEstado, DbStatus};
+use rusqlite::backup::Backup;
 use rusqlite::Connection;
+use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use std::time::Duration;
 use tauri::Manager;
+use rand::RngCore;
+use zeroize::Zeroize;
 
 const SCHEMA_SQL: &str = include_str!("../../../database.sql");
+const MAX_INTENTOS: u8 = 3;
+const CERRADO: &str = "El cuaderno está cerrado. Ingresá la clave.";
+
+enum DbInner {
+    Locked { intentos: u8 },
+    Open { conn: Connection, key: [u8; 32], salt: [u8; 16] },
+}
 
 pub struct Db {
     path: PathBuf,
-    conn: Mutex<Result<Connection, String>>,
+    inner: Mutex<DbInner>,
 }
 
 impl Db {
-    pub fn open_for_app(app: &tauri::App) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn for_app(app: &tauri::App) -> Result<Self, Box<dyn std::error::Error>> {
         let dir = app.path().app_data_dir()?;
         std::fs::create_dir_all(&dir)?;
         let path = dir.join("adm-cursos.sqlite");
-        Self::open_file(&path).map_err(Into::into)
-    }
-
-    pub fn unavailable(message: String) -> Self {
-        Self {
-            path: PathBuf::new(),
-            conn: Mutex::new(Err(message)),
-        }
-    }
-
-    pub fn open_file(path: &Path) -> rusqlite::Result<Self> {
-        let conn = Connection::open(path)?;
-        prepare_connection(&conn)?;
+        recuperar_si_quedo_new(&path);
         Ok(Self {
-            path: path.to_path_buf(),
-            conn: Mutex::new(Ok(conn)),
+            path,
+            inner: Mutex::new(DbInner::Locked { intentos: 0 }),
         })
+    }
+
+    pub fn locked_at(path: PathBuf) -> Self {
+        recuperar_si_quedo_new(&path);
+        Self {
+            path,
+            inner: Mutex::new(DbInner::Locked { intentos: 0 }),
+        }
     }
 
     pub fn status(&self) -> Result<DbStatus, String> {
         self.with_conn(|conn| status_of(conn, Some(&self.path)))
     }
 
+    pub fn candado_estado(&self) -> Result<CandadoEstado, String> {
+        let inner = self.inner.lock().map_err(|e| e.to_string())?;
+        match &*inner {
+            DbInner::Open { .. } => Ok(CandadoEstado {
+                fase: "abierto".into(),
+                intentos_restantes: MAX_INTENTOS as i64,
+                migra: 0,
+            }),
+            DbInner::Locked { intentos } => {
+                let tipo = tipo_archivo(&self.path);
+                let (fase, migra) = match tipo {
+                    TipoArchivo::Cifrado => ("desbloquear", 0),
+                    TipoArchivo::SqliteEnClaro => ("crear", 1),
+                    TipoArchivo::Ausente => ("crear", 0),
+                    TipoArchivo::Desconocido => {
+                        return Err("El archivo del cuaderno no se reconoce.".into());
+                    }
+                };
+                Ok(CandadoEstado {
+                    fase: fase.into(),
+                    intentos_restantes: (MAX_INTENTOS.saturating_sub(*intentos)) as i64,
+                    migra,
+                })
+            }
+        }
+    }
+
+    pub fn crear_clave(&self, clave: &str, repetir: &str) -> Result<CandadoEstado, String> {
+        validar_clave(clave, Some(repetir))?;
+        let mut inner = self.inner.lock().map_err(|e| e.to_string())?;
+        if matches!(*inner, DbInner::Open { .. }) {
+            return Err("El cuaderno ya está abierto.".into());
+        }
+        match tipo_archivo(&self.path) {
+            TipoArchivo::Cifrado => {
+                return Err("Ya hay una clave. Abrí el cuaderno.".into());
+            }
+            TipoArchivo::Desconocido => {
+                return Err("El archivo del cuaderno no se reconoce.".into());
+            }
+            TipoArchivo::Ausente => {
+                let salt = nuevo_salt();
+                let key = derivar_clave(clave, &salt)?;
+                let conn = Connection::open_in_memory().map_err(map_sql_error)?;
+                prepare_connection(&conn).map_err(map_sql_error)?;
+                persistir(&conn, &self.path, &key, &salt)?;
+                *inner = DbInner::Open { conn, key, salt };
+            }
+            TipoArchivo::SqliteEnClaro => {
+                let salt = nuevo_salt();
+                let key = derivar_clave(clave, &salt)?;
+                let plano = {
+                    let conn = Connection::open(&self.path).map_err(map_sql_error)?;
+                    prepare_connection(&conn).map_err(map_sql_error)?;
+                    volcar_bytes(&conn)?
+                };
+                let blob = cifrar(&plano, &key, &salt)?;
+                escribir_atomico(&self.path, &blob)?;
+                borrar_sidecars_sqlite(&self.path);
+                let conn = conn_desde_plano(&plano)?;
+                *inner = DbInner::Open { conn, key, salt };
+            }
+        }
+        Ok(CandadoEstado {
+            fase: "abierto".into(),
+            intentos_restantes: MAX_INTENTOS as i64,
+            migra: 0,
+        })
+    }
+
+    pub fn desbloquear(&self, clave: &str) -> Result<CandadoEstado, String> {
+        validar_clave(clave, None)?;
+        let mut inner = self.inner.lock().map_err(|e| e.to_string())?;
+        if matches!(*inner, DbInner::Open { .. }) {
+            return Ok(CandadoEstado {
+                fase: "abierto".into(),
+                intentos_restantes: MAX_INTENTOS as i64,
+                migra: 0,
+            });
+        }
+        let intentos = match &*inner {
+            DbInner::Locked { intentos } => *intentos,
+            DbInner::Open { .. } => 0,
+        };
+        if intentos >= MAX_INTENTOS {
+            return Err("Demasiados intentos. Cerrá la app y volvé a abrir.".into());
+        }
+        if tipo_archivo(&self.path) != TipoArchivo::Cifrado {
+            return Err("No hay un cuaderno cifrado para abrir.".into());
+        }
+        let blob = fs::read(&self.path).map_err(|e| e.to_string())?;
+        match descifrar(&blob, clave) {
+            Ok((plano, key, salt)) => {
+                let conn = conn_desde_plano(&plano)?;
+                *inner = DbInner::Open { conn, key, salt };
+                Ok(CandadoEstado {
+                    fase: "abierto".into(),
+                    intentos_restantes: MAX_INTENTOS as i64,
+                    migra: 0,
+                })
+            }
+            Err(err) => {
+                *inner = DbInner::Locked {
+                    intentos: intentos + 1,
+                };
+                if intentos + 1 >= MAX_INTENTOS {
+                    Err("Demasiados intentos. Cerrá la app y volvé a abrir.".into())
+                } else {
+                    Err(err)
+                }
+            }
+        }
+    }
+
     pub fn with_conn<T, F>(&self, f: F) -> Result<T, String>
     where
         F: FnOnce(&Connection) -> rusqlite::Result<T>,
     {
-        let guard = self.conn.lock().map_err(|e| e.to_string())?;
-        match &*guard {
-            Ok(conn) => f(conn).map_err(map_sql_error),
-            Err(message) => Err(message.clone()),
+        let mut guard = self.inner.lock().map_err(|e| e.to_string())?;
+        match &mut *guard {
+            DbInner::Open { conn, key, salt } => {
+                let result = f(conn).map_err(map_sql_error)?;
+                persistir(conn, &self.path, key, salt)?;
+                Ok(result)
+            }
+            DbInner::Locked { .. } => Err(CERRADO.into()),
         }
     }
 
@@ -58,12 +188,104 @@ impl Db {
     where
         F: FnOnce(&mut Connection) -> rusqlite::Result<T>,
     {
-        let mut guard = self.conn.lock().map_err(|e| e.to_string())?;
+        let mut guard = self.inner.lock().map_err(|e| e.to_string())?;
         match &mut *guard {
-            Ok(conn) => f(conn).map_err(map_sql_error),
-            Err(message) => Err(message.clone()),
+            DbInner::Open { conn, key, salt } => {
+                let result = f(conn).map_err(map_sql_error)?;
+                persistir(conn, &self.path, key, salt)?;
+                Ok(result)
+            }
+            DbInner::Locked { .. } => Err(CERRADO.into()),
         }
     }
+}
+
+fn tmp_unico(prefijo: &str) -> PathBuf {
+    let mut n = [0u8; 8];
+    rand::thread_rng().fill_bytes(&mut n);
+    std::env::temp_dir().join(format!(
+        "{}-{}-{:016x}",
+        prefijo,
+        std::process::id(),
+        u64::from_le_bytes(n)
+    ))
+}
+
+fn volcar_bytes(conn: &Connection) -> Result<Vec<u8>, String> {
+    let tmp = tmp_unico("adm-cursos-volcado");
+    let _ = fs::remove_file(&tmp);
+    {
+        let mut dst = Connection::open(&tmp).map_err(map_sql_error)?;
+        dst.pragma_update(None, "journal_mode", "OFF")
+            .map_err(map_sql_error)?;
+        {
+            let backup = Backup::new(conn, &mut dst).map_err(map_sql_error)?;
+            backup
+                .run_to_completion(64, Duration::from_millis(0), None)
+                .map_err(map_sql_error)?;
+        }
+    }
+    let bytes = fs::read(&tmp).map_err(|e| e.to_string())?;
+    let _ = fs::remove_file(&tmp);
+    Ok(bytes)
+}
+
+fn conn_desde_plano(plano: &[u8]) -> Result<Connection, String> {
+    let tmp = tmp_unico("adm-cursos-load");
+    let _ = fs::remove_file(&tmp);
+    fs::write(&tmp, plano).map_err(|e| e.to_string())?;
+    let src = Connection::open(&tmp).map_err(map_sql_error)?;
+    let mut dst = Connection::open_in_memory().map_err(map_sql_error)?;
+    {
+        let backup = Backup::new(&src, &mut dst).map_err(map_sql_error)?;
+        backup
+            .run_to_completion(64, Duration::from_millis(0), None)
+            .map_err(map_sql_error)?;
+    }
+    drop(src);
+    let _ = fs::remove_file(&tmp);
+    prepare_connection(&dst).map_err(map_sql_error)?;
+    Ok(dst)
+}
+
+fn persistir(
+    conn: &Connection,
+    path: &Path,
+    key: &[u8; 32],
+    salt: &[u8; 16],
+) -> Result<(), String> {
+    let plano = volcar_bytes(conn)?;
+    let blob = cifrar(&plano, key, salt)?;
+    escribir_atomico(path, &blob)?;
+    borrar_sidecars_sqlite(path);
+    Ok(())
+}
+
+#[tauri::command(rename_all = "snake_case")]
+pub fn candado_estado(db: tauri::State<'_, Db>) -> Result<CandadoEstado, String> {
+    db.candado_estado()
+}
+
+#[tauri::command(rename_all = "snake_case")]
+pub fn crear_clave(
+    db: tauri::State<'_, Db>,
+    clave: String,
+    repetir: String,
+) -> Result<CandadoEstado, String> {
+    let mut clave = clave;
+    let mut repetir = repetir;
+    let r = db.crear_clave(&clave, &repetir);
+    clave.zeroize();
+    repetir.zeroize();
+    r
+}
+
+#[tauri::command(rename_all = "snake_case")]
+pub fn desbloquear(db: tauri::State<'_, Db>, clave: String) -> Result<CandadoEstado, String> {
+    let mut clave = clave;
+    let r = db.desbloquear(&clave);
+    clave.zeroize();
+    r
 }
 
 /// Error de invariante de app (no de SQLite). `map_sql_error` devuelve el texto tal cual.
@@ -844,5 +1066,86 @@ mod tests {
             .query_row("SELECT COUNT(*) FROM alumnos", [], |row| row.get(0))
             .unwrap();
         assert_eq!(n, 2);
+    }
+
+    fn candado_path(tag: &str) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!(
+            "adm-cursos-db-{}-{}",
+            std::process::id(),
+            tag
+        ));
+        let _ = fs::create_dir_all(&dir);
+        let path = dir.join("adm-cursos.sqlite");
+        let _ = fs::remove_file(&path);
+        let _ = fs::remove_file(crate::candado::sidecar(&path, ".new"));
+        path
+    }
+
+    #[test]
+    fn candado_crea_cifra_abre_y_persiste() {
+        let path = candado_path("crea");
+        let db = Db::locked_at(path.clone());
+        let e = db.candado_estado().unwrap();
+        assert_eq!(e.fase, "crear");
+        assert_eq!(e.migra, 0);
+        db.crear_clave("clave-test-ok", "clave-test-ok").unwrap();
+        assert_eq!(tipo_archivo(&path), TipoArchivo::Cifrado);
+        db.with_conn(|conn| {
+            conn.execute("INSERT INTO materias (nombre) VALUES ('English')", [])
+        })
+        .unwrap();
+        let db2 = Db::locked_at(path.clone());
+        assert_eq!(db2.candado_estado().unwrap().fase, "desbloquear");
+        db2.desbloquear("clave-test-ok").unwrap();
+        let n: i64 = db2
+            .with_conn(|conn| {
+                conn.query_row("SELECT COUNT(*) FROM materias WHERE nombre = 'English'", [], |row| {
+                    row.get(0)
+                })
+            })
+            .unwrap();
+        assert_eq!(n, 1);
+    }
+
+    #[test]
+    fn candado_migra_sqlite_en_claro() {
+        let path = candado_path("migra");
+        {
+            let conn = Connection::open(&path).unwrap();
+            prepare_connection(&conn).unwrap();
+            conn.execute("INSERT INTO materias (nombre) VALUES ('Plástica')", [])
+                .unwrap();
+        }
+        assert_eq!(tipo_archivo(&path), TipoArchivo::SqliteEnClaro);
+        let db = Db::locked_at(path.clone());
+        assert_eq!(db.candado_estado().unwrap().migra, 1);
+        db.crear_clave("clave-test-ok", "clave-test-ok").unwrap();
+        assert_eq!(tipo_archivo(&path), TipoArchivo::Cifrado);
+        let n: i64 = db
+            .with_conn(|conn| {
+                conn.query_row(
+                    "SELECT COUNT(*) FROM materias WHERE nombre = 'Plástica'",
+                    [],
+                    |row| row.get(0),
+                )
+            })
+            .unwrap();
+        assert_eq!(n, 1);
+    }
+
+    #[test]
+    fn candado_tres_intentos_y_activo_no_se_limpia() {
+        let path = candado_path("intentos");
+        let db = Db::locked_at(path.clone());
+        db.crear_clave("clave-test-ok", "clave-test-ok").unwrap();
+        let db2 = Db::locked_at(path);
+        for _ in 0..2 {
+            let err = db2.desbloquear("clave-mala-ok").unwrap_err();
+            assert_eq!(err, "Clave incorrecta.");
+        }
+        let err = db2.desbloquear("clave-mala-ok").unwrap_err();
+        assert!(err.contains("Demasiados intentos"));
+        let err = db2.desbloquear("clave-test-ok").unwrap_err();
+        assert!(err.contains("Demasiados intentos"));
     }
 }
