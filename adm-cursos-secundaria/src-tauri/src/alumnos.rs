@@ -396,4 +396,55 @@ mod tests {
         assert_eq!(saved.nombre, "Ana");
         assert_eq!(saved.apellido, "Gómez");
     }
+
+    #[test]
+    fn borrar_persona_cascada_notas_asistencia_observaciones() {
+        let conn = memory();
+        let (c1, _) = seed_dos_cursos(&conn);
+        let a = insert_alumno_sql(&conn, &write("Lucía", "García")).unwrap();
+        inscribir_sql(&conn, a.id, c1).unwrap();
+        conn.execute(
+            "INSERT INTO evaluaciones (id_curso, id_tipo_evaluacion, titulo, fecha)
+             VALUES (?1, 1, 'Escrito 1', '2026-05-12')",
+            [c1],
+        )
+        .unwrap();
+        let ev = conn.last_insert_rowid();
+        conn.execute(
+            "INSERT INTO notas (id_evaluacion, id_alumno, valor, ausente) VALUES (?1, ?2, '8', 0)",
+            rusqlite::params![ev, a.id],
+        )
+        .unwrap();
+        conn.execute(
+            "INSERT INTO observaciones (id_alumno, id_curso, id_tipo_observacion, fecha, texto)
+             VALUES (?1, ?2, 1, '2026-04-01', 'seguimiento')",
+            rusqlite::params![a.id, c1],
+        )
+        .unwrap();
+        conn.execute(
+            "INSERT INTO asistencias (id_curso, id_alumno, fecha, id_estado_asistencia)
+             VALUES (?1, ?2, '2026-04-01', 1)",
+            rusqlite::params![c1, a.id],
+        )
+        .unwrap();
+        delete_alumno_sql(&conn, a.id).unwrap();
+        let n: i64 = conn
+            .query_row("SELECT COUNT(*) FROM alumnos WHERE id = ?1", [a.id], |row| {
+                row.get(0)
+            })
+            .unwrap();
+        assert_eq!(n, 0);
+        let leftover: i64 = conn
+            .query_row(
+                "SELECT
+                    (SELECT COUNT(*) FROM notas WHERE id_alumno = ?1) +
+                    (SELECT COUNT(*) FROM observaciones WHERE id_alumno = ?1) +
+                    (SELECT COUNT(*) FROM asistencias WHERE id_alumno = ?1) +
+                    (SELECT COUNT(*) FROM alumnos_cursos WHERE id_alumno = ?1)",
+                [a.id],
+                |row| row.get(0),
+            )
+            .unwrap();
+        assert_eq!(leftover, 0);
+    }
 }

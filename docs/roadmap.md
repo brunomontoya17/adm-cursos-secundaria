@@ -11,7 +11,7 @@ Cada paso es una **funcionalidad usable** (pantalla + comandos Rust + persistenc
 
 Fuera de este roadmap (a propósito): login, multi-profesor, matrícula institucional, boletines, SIEE, adjuntos.
 
-**Después de 0–10:** minimización y resguardo de datos de alumnos (Ley 25.326, camino B). Pasos **11–14** en [`roadmap-privacidad.md`](./roadmap-privacidad.md). **11–12 hechos** (schema v1.3; aviso de alcance). No mezclar esos PRs con features nuevas de dictado.
+**Después de 0–10:** minimización y resguardo de datos de alumnos (Ley 25.326, camino B). Pasos **11–14** en [`roadmap-privacidad.md`](./roadmap-privacidad.md). **11–13 hechos** (schema v1.3; aviso; baja y caducidad de año). No mezclar esos PRs con features nuevas de dictado.
 
 ---
 

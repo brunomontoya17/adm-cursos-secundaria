@@ -37,7 +37,7 @@ Esto no es asesoramiento legal. Es el recorte de producto que hace defendible el
 |------|-------------|------------|
 | **11** Minimizar ficha de alumno **(hecho)** | Deja de pedirse y persistirse DNI, email, teléfono, fecha de nacimiento | Schema v1.2 |
 | **12** Aviso de alcance **(hecho)** | El docente ve para qué es el cuaderno y qué no anotar | 11 |
-| **13** Baja y caducidad | Borrar persona del todo; limpiar un año lectivo inactivo | 11 |
+| **13** Baja y caducidad **(hecho)** | Borrar persona del todo; limpiar un año lectivo inactivo | 11 |
 | **14** Candado y cifrado | Nadie abre el archivo sin clave; el `.sqlite` no queda en claro | 11–13 (cifrar *después* de achicar el contenido) |
 
 Listo cuando: un docente carga “García, Lucía” **sin DNI**, pasa lista y carga notas; al primer uso leyó que es su cuaderno y no se comparte; puede borrar a Lucía o limpiar 2025; al reabrir pide clave.
@@ -114,7 +114,7 @@ Se **mantienen** los tipos `academica`, `conducta`, `seguimiento`, `reunion_fami
 
 ---
 
-## Paso 13 — Baja total y caducidad de año
+## Paso 13 — Baja total y caducidad de año **(hecho)**
 
 **Para qué.** No conservar de más (art. 4) y poder cumplir un pedido de supresión sin un módulo legal.
 

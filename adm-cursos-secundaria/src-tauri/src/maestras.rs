@@ -1,6 +1,6 @@
 //! Paso 1: jurisdicciones, escuelas, materias y años lectivos.
 
-use crate::db::Db;
+use crate::db::{app_err, Db};
 use crate::domain::{
     AnioLectivo, Ciclo, Division, Escuela, EscuelaWrite, EstadoAsistencia, Jurisdiccion, Materia,
     MateriaWrite, Nivel, TipoEvaluacion, TipoEvento, TipoObservacion, Turno,
@@ -300,6 +300,64 @@ fn insert_anio_sql(conn: &Connection, anio: i64) -> rusqlite::Result<AnioLectivo
     get_anio(conn, conn.last_insert_rowid())
 }
 
+/// Vacía lo operativo de un año **inactivo**. No borra alumnos, escuelas, materias,
+/// el año ni los cursos (quedan dictados vacíos).
+fn limpiar_anio_sql(conn: &mut Connection, id: i64) -> rusqlite::Result<()> {
+    let anio = get_anio(conn, id)?;
+    if anio.activo == 1 {
+        return Err(app_err(
+            "No se puede limpiar el año lectivo activo. Activá otro año antes.",
+        ));
+    }
+    let tx = conn.transaction()?;
+    tx.execute(
+        "DELETE FROM notas WHERE id_evaluacion IN (
+            SELECT e.id FROM evaluaciones e
+            JOIN cursos c ON c.id = e.id_curso
+            WHERE c.id_anio_lectivo = ?1
+        )",
+        [id],
+    )?;
+    tx.execute(
+        "DELETE FROM observaciones WHERE id_curso IN (
+            SELECT id FROM cursos WHERE id_anio_lectivo = ?1
+        )",
+        [id],
+    )?;
+    tx.execute(
+        "DELETE FROM asistencias WHERE id_curso IN (
+            SELECT id FROM cursos WHERE id_anio_lectivo = ?1
+        )",
+        [id],
+    )?;
+    tx.execute(
+        "DELETE FROM evaluaciones WHERE id_curso IN (
+            SELECT id FROM cursos WHERE id_anio_lectivo = ?1
+        )",
+        [id],
+    )?;
+    tx.execute(
+        "DELETE FROM eventos WHERE id_curso IN (
+            SELECT id FROM cursos WHERE id_anio_lectivo = ?1
+        )",
+        [id],
+    )?;
+    tx.execute(
+        "DELETE FROM horarios WHERE id_curso IN (
+            SELECT id FROM cursos WHERE id_anio_lectivo = ?1
+        )",
+        [id],
+    )?;
+    tx.execute(
+        "DELETE FROM alumnos_cursos WHERE id_curso IN (
+            SELECT id FROM cursos WHERE id_anio_lectivo = ?1
+        )",
+        [id],
+    )?;
+    tx.commit()?;
+    Ok(())
+}
+
 fn activar_anio_sql(conn: &mut Connection, id: i64) -> rusqlite::Result<AnioLectivo> {
     let exists: Option<i64> = conn
         .query_row(
@@ -444,6 +502,11 @@ pub fn activar_anio_lectivo(db: State<'_, Db>, id: i64) -> Result<AnioLectivo, S
     db.with_conn_mut(|conn| activar_anio_sql(conn, id))
 }
 
+#[tauri::command(rename_all = "snake_case")]
+pub fn limpiar_anio_lectivo(db: State<'_, Db>, id: i64) -> Result<(), String> {
+    db.with_conn_mut(|conn| limpiar_anio_sql(conn, id))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -520,5 +583,167 @@ mod tests {
         assert_eq!(saved.nombre, "Normal 2");
         assert_eq!(saved.nombre_corto, None);
         assert_eq!(saved.email, None);
+    }
+
+    fn seed_curso_en_anio(conn: &Connection, id_anio: i64, nombre: &str) -> i64 {
+        let n: i64 = conn
+            .query_row("SELECT COUNT(*) FROM escuelas", [], |row| row.get(0))
+            .unwrap();
+        if n == 0 {
+            conn.execute(
+                "INSERT INTO escuelas (id_jurisdiccion, nombre) VALUES (1, 'ENET Nº 1')",
+                [],
+            )
+            .unwrap();
+            conn.execute("INSERT INTO materias (nombre) VALUES ('English')", [])
+                .unwrap();
+        }
+        let ciclo: i64 = conn
+            .query_row(
+                "SELECT c.id FROM ciclos c JOIN niveles n ON n.id = c.id_nivel
+                 WHERE n.codigo = 'secundaria' AND c.orden = 3",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
+        conn.execute(
+            "INSERT INTO cursos (nombre, id_escuela, id_turno, id_division, id_ciclo, id_materia, id_anio_lectivo)
+             VALUES (?1, 1, 1, 1, ?2, 1, ?3)",
+            params![nombre, ciclo, id_anio],
+        )
+        .unwrap();
+        conn.last_insert_rowid()
+    }
+
+    fn count(conn: &Connection, sql: &str) -> i64 {
+        conn.query_row(sql, [], |row| row.get(0)).unwrap()
+    }
+
+    #[test]
+    fn no_limpia_el_anio_activo() {
+        let mut conn = memory();
+        let err = limpiar_anio_sql(&mut conn, 1).unwrap_err();
+        assert_eq!(
+            crate::db::map_sql_error(err),
+            "No se puede limpiar el año lectivo activo. Activá otro año antes."
+        );
+    }
+
+    #[test]
+    fn limpiar_anio_inactivo_vacia_operativa_y_conserva_el_resto() {
+        let mut conn = memory();
+        let y2025 = insert_anio_sql(&conn, 2025).unwrap();
+        let c_viejo = seed_curso_en_anio(&conn, y2025.id, "3° A English 2025");
+        let c_activo = seed_curso_en_anio(&conn, 1, "3° A English 2026");
+        conn.execute(
+            "INSERT INTO alumnos (nombre, apellido) VALUES ('Lucía', 'García')",
+            [],
+        )
+        .unwrap();
+        let alumno = conn.last_insert_rowid();
+        conn.execute(
+            "INSERT INTO alumnos_cursos (id_alumno, id_curso) VALUES (?1, ?2), (?1, ?3)",
+            params![alumno, c_viejo, c_activo],
+        )
+        .unwrap();
+        conn.execute(
+            "INSERT INTO evaluaciones (id_curso, id_tipo_evaluacion, titulo, fecha)
+             VALUES (?1, 1, 'Escrito 1', '2025-05-12'), (?2, 1, 'Escrito 1', '2026-05-12')",
+            params![c_viejo, c_activo],
+        )
+        .unwrap();
+        let ev_viejo: i64 = conn
+            .query_row(
+                "SELECT id FROM evaluaciones WHERE id_curso = ?1",
+                [c_viejo],
+                |row| row.get(0),
+            )
+            .unwrap();
+        let ev_activo: i64 = conn
+            .query_row(
+                "SELECT id FROM evaluaciones WHERE id_curso = ?1",
+                [c_activo],
+                |row| row.get(0),
+            )
+            .unwrap();
+        conn.execute(
+            "INSERT INTO notas (id_evaluacion, id_alumno, valor, ausente) VALUES (?1, ?2, '8', 0), (?3, ?2, '7', 0)",
+            params![ev_viejo, alumno, ev_activo],
+        )
+        .unwrap();
+        conn.execute(
+            "INSERT INTO observaciones (id_alumno, id_curso, id_tipo_observacion, fecha, texto)
+             VALUES (?1, ?2, 1, '2025-04-01', '2025'), (?1, ?3, 1, '2026-04-01', '2026')",
+            params![alumno, c_viejo, c_activo],
+        )
+        .unwrap();
+        conn.execute(
+            "INSERT INTO asistencias (id_curso, id_alumno, fecha, id_estado_asistencia)
+             VALUES (?1, ?2, '2025-04-01', 1), (?3, ?2, '2026-04-01', 1)",
+            params![c_viejo, alumno, c_activo],
+        )
+        .unwrap();
+        conn.execute(
+            "INSERT INTO horarios (id_curso, dia_semana, hora_inicio, hora_fin)
+             VALUES (?1, 1, '14:00', '15:20'), (?2, 1, '14:00', '15:20')",
+            params![c_viejo, c_activo],
+        )
+        .unwrap();
+        conn.execute(
+            "INSERT INTO eventos (id_curso, id_tipo_evento, fecha, titulo)
+             VALUES (?1, 1, '2025-04-02', 'Tema 2025'), (NULL, 6, '2025-05-01', 'Paro')",
+            [c_viejo],
+        )
+        .unwrap();
+
+        limpiar_anio_sql(&mut conn, y2025.id).unwrap();
+
+        assert_eq!(
+            count(
+                &conn,
+                "SELECT COUNT(*) FROM notas WHERE id_evaluacion IN (
+                    SELECT id FROM evaluaciones WHERE id_curso IN (
+                        SELECT id FROM cursos WHERE id_anio_lectivo = (
+                            SELECT id FROM anios_lectivos WHERE anio = 2025
+                        )
+                    )
+                )"
+            ),
+            0
+        );
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM notas"), 1);
+        assert_eq!(
+            count(&conn, "SELECT COUNT(*) FROM observaciones WHERE id_curso IN (SELECT id FROM cursos WHERE id_anio_lectivo = (SELECT id FROM anios_lectivos WHERE anio = 2025))"),
+            0
+        );
+        assert_eq!(
+            count(&conn, "SELECT COUNT(*) FROM observaciones WHERE texto = '2026'"),
+            1
+        );
+        assert_eq!(
+            count(&conn, "SELECT COUNT(*) FROM asistencias WHERE id_curso IN (SELECT id FROM cursos WHERE id_anio_lectivo = (SELECT id FROM anios_lectivos WHERE anio = 2025))"),
+            0
+        );
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM asistencias"), 1);
+        assert_eq!(
+            count(&conn, "SELECT COUNT(*) FROM evaluaciones WHERE id_curso IN (SELECT id FROM cursos WHERE id_anio_lectivo = (SELECT id FROM anios_lectivos WHERE anio = 2025))"),
+            0
+        );
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM evaluaciones"), 1);
+        assert_eq!(
+            count(&conn, "SELECT COUNT(*) FROM horarios WHERE id_curso IN (SELECT id FROM cursos WHERE id_anio_lectivo = (SELECT id FROM anios_lectivos WHERE anio = 2025))"),
+            0
+        );
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM horarios"), 1);
+        assert_eq!(
+            count(&conn, "SELECT COUNT(*) FROM alumnos_cursos WHERE id_curso IN (SELECT id FROM cursos WHERE id_anio_lectivo = (SELECT id FROM anios_lectivos WHERE anio = 2025))"),
+            0
+        );
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM alumnos_cursos"), 1);
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM alumnos"), 1);
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM cursos"), 2);
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM anios_lectivos WHERE anio = 2025"), 1);
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM eventos WHERE titulo = 'Tema 2025'"), 0);
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM eventos WHERE titulo = 'Paro'"), 1);
     }
 }

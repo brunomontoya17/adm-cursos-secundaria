@@ -25,6 +25,6 @@ export const AVISO_ALCANCE = {
     "Se guarda en este equipo: nombre y apellido de tus alumnos, notas, asistencia y observaciones de ese dictado.",
     "No se envía a la escuela, al ministerio, a internet ni a un modelo de IA.",
     "No anotes diagnósticos, certificados, DNI, domicilio ni relatos de reuniones con la familia.",
-    "Para borrar a una persona (inscripciones, notas, asistencia y observaciones): Alumnos → Borrar.",
+    "Para borrar a una persona (inscripciones, notas, asistencia y observaciones): Alumnos → Borrar. Para vaciar un año que ya no está activo: cabecera → Limpiar año.",
   ],
 } as const;

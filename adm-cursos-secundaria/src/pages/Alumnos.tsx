@@ -138,10 +138,15 @@ function Alumnos() {
   }
 
   async function onDelete(row: Alumno) {
+    const nDictados = inscDe(row.id).length;
+    const enVarios =
+      nDictados > 1 && activo
+        ? ` Está en ${nDictados} dictados de ${activo.anio}. Dar de baja de un curso no borra a la persona.`
+        : "";
     const ok = await confirmAction({
       title: "¿Borrar esta persona?",
-      text: `${etiquetaPersona(row)}. Se borran inscripciones, notas, asistencias y observaciones.`,
-      confirmText: "Borrar",
+      text: `${etiquetaPersona(row)}. Se borra de todos los años: inscripciones, notas, asistencia y observaciones.${enVarios}`,
+      confirmText: "Borrar persona",
       danger: true,
     });
     if (!ok) return;

@@ -114,7 +114,7 @@ React (src/)  --invoke-->  Rust commands (src-tauri)
 - Feedback: react-toastify + sweetalert2. Iconos: `lucide-react`. Gráficos: `recharts`.
 - Estilos: `tailwindcss`. Fechas: Temporal. Catálogo: [`libraries-npm.md`](../libraries-npm.md).
 
-Estado 2026-09-16: schema dominio **v1.3** (ficha de alumno = nombre + apellido). Rust abre SQLite con `PRAGMA foreign_keys = ON`, aplica `database.sql` si la DB está vacía, migra v1.1 → v1.2 (niveles + grados) y v1.2 → v1.3 (tira DNI/contacto/nacimiento conservando `id`). Aviso de alcance en `{app_data_dir}/privacidad.json` (no es tabla). IPC: `src/api.ts` (Zod) ↔ `src-tauri/src/domain.rs`; argumentos de comando en snake_case (`rename_all` en Rust). Pasos 0–10 del [roadmap](./roadmap.md) listos; pasos 11–12 de [privacidad](./roadmap-privacidad.md) listos.
+Estado 2026-09-16: schema dominio **v1.3** (ficha de alumno = nombre + apellido). Rust abre SQLite con `PRAGMA foreign_keys = ON`, aplica `database.sql` si la DB está vacía, migra v1.1 → v1.2 (niveles + grados) y v1.2 → v1.3 (tira DNI/contacto/nacimiento conservando `id`). Aviso de alcance en `{app_data_dir}/privacidad.json` (no es tabla). IPC: `src/api.ts` (Zod) ↔ `src-tauri/src/domain.rs`; argumentos de comando en snake_case (`rename_all` en Rust). Pasos 0–10 del [roadmap](./roadmap.md) listos; pasos 11–13 de [privacidad](./roadmap-privacidad.md) listos.
 
 ## 6. Reglas para agentes
 

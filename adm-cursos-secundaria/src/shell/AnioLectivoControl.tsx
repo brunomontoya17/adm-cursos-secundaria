@@ -1,7 +1,8 @@
 import { useAnioLectivo } from "./AnioLectivoContext";
 
 function AnioLectivoControl() {
-  const { anios, activo, loading, siguienteAnio, activar, crearSiguiente } = useAnioLectivo();
+  const { anios, activo, loading, siguienteAnio, activar, crearSiguiente, limpiarAnioInactivo } =
+    useAnioLectivo();
 
   return (
     <div className="ml-auto flex items-center gap-2 text-sm text-cream">
@@ -30,13 +31,22 @@ function AnioLectivoControl() {
         </select>
       </label>
       {!loading && (
-        <button
-          type="button"
-          className="border border-cream/40 px-2 py-1 text-cream hover:bg-navy-mid"
-          onClick={() => void crearSiguiente()}
-        >
-          Crear {siguienteAnio}
-        </button>
+        <>
+          <button
+            type="button"
+            className="border border-cream/40 px-2 py-1 text-cream hover:bg-navy-mid"
+            onClick={() => void crearSiguiente()}
+          >
+            Crear {siguienteAnio}
+          </button>
+          <button
+            type="button"
+            className="border border-cream/40 px-2 py-1 text-cream hover:bg-navy-mid"
+            onClick={() => void limpiarAnioInactivo()}
+          >
+            Limpiar año
+          </button>
+        </>
       )}
     </div>
   );

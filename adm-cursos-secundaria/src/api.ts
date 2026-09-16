@@ -475,6 +475,8 @@ export const api = {
     invokeChecked("create_anio_lectivo", anioLectivoSchema, { anio }),
   activarAnioLectivo: (id: number) =>
     invokeChecked("activar_anio_lectivo", anioLectivoSchema, { id }),
+  limpiarAnioLectivo: (id: number) =>
+    invokeChecked("limpiar_anio_lectivo", voidResultSchema, { id }),
   listCursos: (id_anio_lectivo: number) =>
     invokeChecked("list_cursos", z.array(cursoSchema), { id_anio_lectivo }),
   getCurso: (id: number) => invokeChecked("get_curso", cursoSchema, { id }),

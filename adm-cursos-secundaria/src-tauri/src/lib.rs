@@ -65,6 +65,7 @@ pub fn run() {
             maestras::list_anios_lectivos,
             maestras::create_anio_lectivo,
             maestras::activar_anio_lectivo,
+            maestras::limpiar_anio_lectivo,
             cursos::list_cursos,
             cursos::get_curso,
             cursos::create_curso,
